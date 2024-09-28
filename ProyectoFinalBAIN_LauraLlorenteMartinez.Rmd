@@ -1,0 +1,3062 @@
+---
+title: "US Mass Shootings"
+author: "Laura Llorente Martínez"
+date: "2024-05-20"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+# Configuración de opciones para knitr:
+
+# Establecemos la opción 'echo' a TRUE: el código fuente R se mostrará en el informe generado, lo que permite ver el código fuente junto con los resultados en el documento
+# Establecemos las opciones 'warning' y 'message' a FALSE: no se mostrarán advertencias ni mensajes en el documento
+```
+
+![US Mass Shootings](images/ca729df5-9523-4d32-9dbe-22fb1ae1c939.webp)
+
+# Fuente de los datos
+
+He obtenido el conjunto de datos de Kaggle: [US Mass Shootings](https://www.kaggle.com/datasets/zusmani/us-mass-shootings-last-50-years?resource=download&select=Mass+Shootings+Dataset+Ver+5.csv)
+
+La versión utilizada para este proyecto es: *Mass Shootings Dataset Ver 5*
+
+# Introducción al Proyecto sobre Tiroteos Masivos en Estados Unidos (1966-2017)
+
+Este proyecto se basa en el análisis de un conjunto de datos que abarca las trágicas incidencias de tiroteos masivos en Estados Unidos de América entre 1966 y 2017. A lo largo de este periodo de más de cinco décadas, Estados Unidos ha sido escenario de 398 tiroteos masivos, que han dejado una cifra de 1,996 muertos y 2,488 heridos. El análisis de este fenómeno no solo es pertinente por su impacto social y humanitario, sino también por las implicaciones políticas y de política pública que conlleva.
+
+Este conjunto de datos detalla cada uno de estos incidentes violentos, proporcionando no solo cifras de víctimas, sino también información contextual crítica como la ubicación, fecha, resumen del incidente, y variables demográficas y psicológicas de los atacantes, incluyendo su raza, género y estado de salud mental. Además, incluye información geográfica precisa, lo que permite un análisis espacial detallado.
+
+El propósito de este proyecto es utilizar técnicas de minería de texto y análisis de redes sociales para extraer insights más profundos de los datos. La minería de texto nos permitirá entender mejor las circunstancias y características asociadas a estos eventos. Por otro lado, el análisis de redes sociales ayudará a visualizar y analizar las relaciones y patrones que emergen de los datos, como las conexiones entre incidentes basadas en características comunes o patrones de victimización.
+
+# Instalación y Carga de Paquetes Necesarios, Directorio de Trabajo
+
+Cargamos librerías necesarias y establecemos el directorio de trabajo:
+
+```{r}
+
+# Librerias
+library(quanteda)  # Para el análisis cuantitativo de datos textuales
+library(quanteda.textplots)  # Para visualizaciones de datos textuales dentro de 'quanteda'
+library(quanteda.textmodels) # Para modelado de textos con 'quanteda'
+library(quanteda.textstats)  # Para generar estadísticas textuales con 'quanteda'
+library(stringr)  # Para manipulación de cadenas de texto 
+library(tidyverse)  # Colección de paquetes para ciencia de datos
+library(tidytext) # Para el análisis de texto dentro del 'tidy data'
+library(dplyr)    # Para manipulación de datos
+library(scales)  # Biblioteca para funciones de formato de escala en visualizaciones
+library(forcats)  # Para trabajar con factores
+library(ggplot2)  # Sistema de visualización de datos basado en la gramática de gráficos
+library(RColorBrewer)  # Para paletas de colores en gráficos, basado en Color Brewer
+library(topicmodels)  # Para modelado de tópicos de datos textuales, incluyendo LDA
+library(wordcloud)  # Para generar nubes de palabras
+library(SentimentAnalysis)  # Para análisis de sentimientos basado en diccionarios y modelos
+library(quanteda.dictionaries)  # Diccionarios predefinidos para su uso con 'quanteda'
+library(textdata)  # Para descargar y cargar conjuntos de datos textuales y léxicos
+library(igraph)      # Para el manejo de grafos
+```
+
+```{r}
+
+# Directorio de trabajo
+setwd("D:/Laura - UTAD/Tercero/Segundo cuatrimestre/Búsqueda y Análisis de la Información/Tareas/Tarea final")
+```
+
+# Lectura de los datos
+
+```{r}
+
+# Ruta donde tenemos guardado el fichero csv y el nombre del fichero
+ruta_fichero <- "D:/Laura - UTAD/Tercero/Segundo cuatrimestre/Búsqueda y Análisis de la Información/Tareas/Tarea final/"
+
+fichero <- "Mass Shootings Dataset Ver 5.csv"
+
+# Leemos el archivo CSV 
+  # 'paste0' se usa para construir la ruta completa dell archivo
+  # 'header = TRUE' indica que la primera fila contiene los nombres de las columnas
+  # 'sep = ","' especifica que el separador de campos en el archivo CSV es una coma
+  
+datos <- read.csv(file = paste0(ruta_fichero, fichero), header = TRUE, sep = ",")
+```
+
+```{r}
+
+# Verificamos la estructura y el resumen de los datos
+summary(datos)
+
+# Imprimimos el número total de filas
+print(paste("Numero total de filas:", nrow(datos)))
+
+# Mostramos los nombres de las columnas del data.frame 
+names(datos)
+
+# Verificamos si todos los valores en 'S.' son únicos
+print(paste("Los identificadores son únicos:", all(unique(datos$S.) == datos$S.)))
+```
+
+El conjunto de datos contiene un total de 323 filas. Las columnas disponibles en el data frame son:
+
+1.  **S:** Identificador único para cada registro en el conjunto de datos.
+
+2.  **Title:** Título o breve descripción del incidente.
+
+3.  **Location:** Ubicación geográfica donde ocurrió el incidente.
+
+4.  **Date:** Fecha en la que tuvo lugar el incidente.
+
+5.  **Incident.Area:** Área específica donde ocurrió el incidente, por ejemplo, una escuela, un cine, etc.
+
+6.  **Open.Close.Location:** Indica si el incidente ocurrió en un espacio cerrado o en un espacio abierto.
+
+7.  **Target:** Audiencia o grupo objetivo del ataque.
+
+8.  **Cause:** La razón detrás del incidente.
+
+9.  **Summary:** Resumen detallado del evento, proporcionando contexto y detalles adicionales no cubiertos en otras columnas.
+
+10. **Fatalities:** Número de personas fallecidas como resultado del incidente.
+
+11. **Injured:** Número de personas heridas en el incidente.
+
+12. **Total.victims:** Total de víctimas involucradas, que incluye tanto a los heridos como a los fallecidos.
+
+13. **Policeman.Killed:** Número de oficiales de policía que fueron asesinados durante el incidente.
+
+14. **Age:** Edad del autor o autores del tiroteo.
+
+15. **Employeed..Y.N.:** Indica si el tirador estaba empleado (Y) o no (N) en el momento del incidente.
+
+16. **Employed.at:** Nombre del empleo del tirador, si estaba empleado.
+
+17. **Mental.Health.Issues:** Indica si se conocen problemas de salud mental del tirador.
+
+18. **Race:** Raza del tirador.
+
+19. **Gender:** Género del tirador.
+
+20. **Latitude:** Coordenada de latitud del lugar del incidente.
+
+21. **Longitude:** Coordenada de longitud del lugar del incidente.
+
+Analizamos los datos que hemos cargado:
+
+```{r}
+
+# Creamos tablas de contingencia para combinaciones de columnas
+genero_salud_mental <- table(datos$Gender, datos$Mental.Health.Issues)
+raza_genero <- table(datos$Race, datos$Gender)
+
+# Imprimimos los resultados
+list(Genero_y_Salud_Mental = genero_salud_mental, Raza_y_Genero = raza_genero)
+```
+
+# Pre-proceso dataframe y limpieza del dataset
+
+```{r}
+
+# Convertimos variables categóricas importantes a factores
+datos$Title <- as.factor(datos$Title)
+datos$Summary <- as.factor(datos$Summary)
+datos$Location <- as.factor(datos$Location)
+datos$Open.Close.Location <- as.factor(datos$Open.Close.Location)
+datos$Fatalities <- as.factor(datos$Fatalities)
+datos$Injured <- as.factor(datos$Injured)
+datos$Total.victims <- as.factor(datos$Total.victims)
+datos$Target <- as.factor(datos$Target)
+datos$Age <- as.factor(datos$Age)
+datos$Cause <- as.factor(datos$Cause)
+datos$Mental.Health.Issues <- as.factor(datos$Mental.Health.Issues)
+datos$Race <- as.factor(datos$Race)
+datos$Gender <- as.factor(datos$Gender)
+
+# Convertimos la columna de fechas a formato de fecha
+datos$Date <- as.Date(datos$Date, format = "%m/%d/%Y")
+
+# Convertimos a POSIXct (fecha y hora)
+datos$Date_posix <- as.POSIXct(datos$Date, format = "%m/%d/%Y")
+```
+
+Limpiamos los datos de carácteres no deseados para un mejor análisis:
+
+```{r}
+
+# Eliminamos los niveles que no tienen ningún registro: usamos droplevels
+datos_limpios <- droplevels(datos)
+
+# Limpieza básica del conjunto de datos
+datos_limpios <- datos_limpios %>%
+  # Aseguramos que los tipos de datos numéricos sean correctos
+  # Eliminamos todo excepto números y puntos
+   mutate(
+    Fatalities = as.numeric(gsub("[^0-9.]", "", Fatalities)),  
+    Injured = as.numeric(gsub("[^0-9.]", "", Injured)),
+    Total.victims = as.numeric(gsub("[^0-9.]", "", Total.victims)),
+    Policeman.Killed = as.numeric(gsub("[^0-9.]", "", Policeman.Killed)),
+    Age = as.numeric(gsub("[^0-9.]", "", Age))
+  ) %>%
+  # Hacemos algunos datos mas legibles
+  mutate(
+    Mental.Health.Issues = case_when(
+      Mental.Health.Issues %in% c("Yes", "Y") ~ "Yes",
+      Mental.Health.Issues %in% c("No", "N") ~ "No",
+      TRUE ~ as.character(Mental.Health.Issues)  # Mantenemos original si no coincide
+    ),
+    Gender = case_when(
+      Gender %in% c("Male", "M") ~ "Male",
+      Gender %in% c("Female", "F") ~ "Female",
+      TRUE ~ as.character(Gender)  # Mantenemos original si no coincide
+    )
+  )
+
+# Eliminamos caracteres no ASCII de la columna Summary
+datos_limpios$Summary <- iconv(datos_limpios$Summary, to = "ASCII", sub = " ")
+
+# Pasamos el resumen (summary) a minúsculas
+datos_limpios$Summary <- tolower(datos_limpios$Summary)
+
+```
+
+Separamos la columna de Location en State y City para un mejor análisis:
+
+```{r}
+
+# Convertimos la columna Location a carácter si no lo es ya
+datos_limpios$Location <- as.character(datos_limpios$Location)
+
+# Separación de 'Location' en 'City' y 'State'
+datos_limpios <- datos_limpios %>%
+  mutate(State = sapply(Location, function(parts) {
+    temp <- strsplit(parts, split = ",")
+    sapply(temp, function(new) {
+        if(length(new) > 1) {
+            str_trim(new[2])  # Eliminamos espacios en blanco
+        } else {
+            NA  # Si no hay estado, ponemos NA
+        }
+    })
+  }),
+  City = sapply(Location, function(parts) {
+    temp <- strsplit(parts, split = ",")
+    sapply(temp, function(new) {
+        if(length(new) > 1) {
+            str_trim(new[1])  # Eliminamos espacios en blanco
+        } else {
+             NA  # Si no hay ciudad, ponemos NA
+        }
+    })
+  }))
+
+# Guardamos el conjunto de datos limpio para análisis posterior
+save(datos_limpios, file = "datos_limpios.rda")
+```
+
+# Filtración de los datos según el tema de análisis
+
+Hacemos un pequeño filtrado para estudiar los datos que hemos limpiado del dataset.
+
+### Filtrado por grupo de edad
+
+Realizamos un análisis de los tiroteos agrupando a los tiradores por grupos de edad:
+
+```{r}
+
+# Creamos un factor de grupo de edad
+datos_limpios_filtracion <- datos_limpios %>%
+  mutate(Age_Group = case_when(
+    Age < 25 ~ "Menores de 25",
+    Age >= 25 & Age <= 40 ~ "25 a 40",
+    Age > 40 ~ "Mayores de 40"
+  ))
+
+```
+
+```{r}
+
+# Vemos la distribución del número de víctimas por grupo de edad
+summary_stats <- datos_limpios_filtracion %>%
+  group_by(Age_Group) %>%
+  summarise(
+    Count = n(),
+    Average_Victims = mean(Total.victims, na.rm = TRUE),
+    Median_Victims = median(Total.victims, na.rm = TRUE),
+    Max_Victims = max(Total.victims, na.rm = TRUE)
+  )
+  
+# Vemos los resultados
+print(summary_stats)
+```
+
+-   **Mayores de 40 años**: Este grupo tiene el promedio más alto de víctimas (20.20) y el mayor número de víctimas (585), sugiriendo que los tiradores de este grupo pueden estar involucrados en más incidentes.
+
+-   **25 a 40 años**: Aunque tienen un promedio de víctimas menor (11.86) comparado con los mayores de 40 años, este grupo también incluye incidentes con un alto número de víctimas (máximo de 102).
+
+-   **Menores de 25 años**: Este grupo tiene el promedio más bajo de víctimas (10.85) entre los grupos con edades disponibles, pero aún incluyen incidentes con un número significativo de víctimas (máximo de 82).
+
+-   **NA (No Disponible)**: Los casos sin información de edad tienen un promedio de víctimas significativamente más bajo (5.52).
+
+### Filtrado por menciones de salud mental
+
+Realizamos un análisis de los tiroteos agrupando a los tiradores por grupos dependiendo de si tenían o no problemas de salud mental:
+
+```{r}
+
+# Análisis de datos filtrados
+mental_health_analysis <- datos_limpios %>%
+  group_by(Mental.Health.Issues) %>%
+  summarise(
+    Total_Incidents = n(),
+    Average_Fatalities = mean(Fatalities, na.rm = TRUE),
+    Average_Injured = mean(Injured, na.rm = TRUE),
+    Total_Victims_Average = mean(Total.victims, na.rm = TRUE)
+  )
+
+# Vemos los resultados
+print(mental_health_analysis)
+```
+
+-   **Problemas de Salud Mental No Claros (Unclear)** tienen un alto promedio de víctimas, lo que sugiere que estos incidentes pueden ser más mortales.
+
+-   **Con Problemas de Salud Mental (Yes)** también muestran un alto promedio de víctimas, apoyando la idea de que los problemas de salud mental pueden estar asociados con la gravedad de los incidentes.
+
+-   **Problemas de Salud Mental Desconocidos (Unknown)** presentan el mayor número de incidentes, pero con menor gravedad en términos de víctimas.
+
+# Análisis de los estados y ciudades con más tiroteos
+
+Realizamos un estudio de las ciudades y sus estados con más tiroteos:
+
+```{r}
+
+# Contamos los tiroteos por ciudad y estado, eliminando los NA, y ordenando de mayor a menor
+shooting_counts <- datos_limpios %>%
+  drop_na(City, State) %>%
+  group_by(City, State) %>%
+  summarise(Total_Shootings = n(), .groups = 'drop') %>%
+  arrange(desc(Total_Shootings))
+
+# Verificamos las primeras filas del conteo
+head(shooting_counts)
+```
+
+Podemos ver que la ciudad con más tiroteos es Seattle (Washington), seguida de Killeen (Texas) y Pheonix (Arizona), según los datos recogidos en este dataset.
+
+# Análisis del tiroteo con mayor número de víctimas
+
+```{r}
+
+# Encontramos el tiroteo con más víctimas 
+tiroteo_max_victimas <- datos_limpios %>%   
+  filter(Total.victims == max(Total.victims, na.rm = TRUE)) %>%   
+  select(Title, Date, Location, Incident.Area, Open.Close.Location, Target, Cause, Summary, Fatalities, Injured, Total.victims, Policeman.Killed, Mental.Health.Issues, Race, Gender) %>%   
+  droplevels()  
+
+# Mostramos el resultado 
+print(tiroteo_max_victimas)
+```
+
+Stephen Paddock, un contador retirado y jugador de video póker de altas apuestas, fue el responsable del tiroteo masivo en Las Vegas en 2017, considerado el más mortal en la historia moderna de EE. UU. Desde su habitación en el Mandalay Bay Hotel, Paddock disparó a los asistentes al festival Route 91 Harvest, matando a 60 personas e hiriendo a 867. A pesar de las investigaciones extensas, los motivos de Paddock siguen siendo en gran parte inconclusos, aunque se especula que pudo haber estado descontento con el trato recibido en los casinos como gran apostador. Paddock se había preparado meticulosamente, acumulando un arsenal significativo y modificando sus armas para aumentar la cadencia de fuego. No se encontraron sustancias psicoactivas en su sistema al momento del tiroteo.
+
+Podemos ver que el número de víctimas mortales y sobre todo el de heridos, es mayor que el que aparece en la base de datos. Esto puede deberse a que muchos datos sobre las personas heridas salieron a la luz más tarde de la fecha en la que se generó este dataset. Además, cabe destacar que, como se explica en el contexto del tiroteo, no se supo la causa exacta de este ataque, por lo que en Cause aparece Unknown.
+
+# Análisis del número de tiroteos por año
+
+Vamos a analizar el número de tiroteos en cada año, de forma que podamos analizar más tarde aquellos años en los que hubo más tiroteos y en los que hubo menos, con la finalidad de sacar conclusiones:
+
+```{r}
+
+# Extraemos el año de la fecha
+datos_limpios$Year <- format(datos_limpios$Date, "%Y")
+
+# Agrupamos por año y contamos tiroteos
+yearly_shootings <- datos_limpios %>%
+  group_by(Year) %>%
+  summarise(Shootings = n(), .groups = 'drop')
+
+# Vemos los datos
+print(yearly_shootings)
+```
+
+```{r}
+
+# Guardamos en una variable los años y en otra los tiroteos
+shootings_by_year <- yearly_shootings$Shootings
+years <- yearly_shootings$Year
+
+# Creamos el gráfico de barras
+barplot(shootings_by_year,
+        names.arg = years,  # Etiquetas del eje x (años)
+        xlab = "Año",      # Etiqueta del eje x
+        ylab = "Número de tiroteos",  # Etiqueta del eje y
+        main = "Número de tiroteos por año",  # Título del gráfico
+        col = "steelblue",  # Color de las barras
+        las = 2,            # Orientación de las etiquetas del eje x (vertical)
+        cex.names = 0.6,    # Tamaño de las etiquetas del eje x
+        cex.axis = 0.7,     # Tamaño del texto del eje
+        ylim = c(0, max(shootings_by_year) * 1.2) # Ajustar el límite del eje y
+)
+```
+
+Este gráfico muestra el número de tiroteos por año en Estados Unidos desde 1966 hasta 2017. La tendencia general que se puede observar es que, a lo largo de las décadas, el número de tiroteos ha aumentado significativamente.
+
+En las primeras décadas, de 1966 a principios de los 2000, la cantidad de tiroteos anuales es relativamente baja, normalmente debajo de 20 incidentes por año. A partir de mediados de los años 2000, se observa un incremento notable en la frecuencia de estos eventos, terminando en un pico muy pronunciado en los años 2015 y 2016. Estos dos años muestran un aumento significativo en la cantidad de tiroteos, con cifras que se acercan a los 80 tiroteos anuales.
+
+Este aumento puede estar influenciado por varios factores, como cambios en las leyes de control de armas, factores socioeconómicos, y cambios culturales y políticos.
+
+### Análisis de la distribución de víctimas en 2015-2016
+
+Como ya hemos visto, estos dos fueron los años con más tiroteos, por lo que vamos a hacer un estudio más detenido de ellos.
+
+```{r}
+
+# Calculamos la distribución de víctimas
+ggplot(datos_limpios %>% filter(Year %in% c("2015", "2016")), aes(x = as.numeric(Total.victims))) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Distribución de Total de Víctimas en 2015-2016", x = "Total de Víctimas", y = "Frecuencia") +
+  theme_minimal()
+
+```
+
+Podemos ver que, en general, el número de víctimas está entre 1 y 10. Sin embargo, llama la atención que hay uno alrededor de 100 víctimas. Vamos a analizarlo:
+
+```{r}
+
+# Filtramos los datos para los años 2015 y 2016
+datos_2015_2016 <- datos_limpios %>%
+  filter(Year %in% c("2015", "2016"))
+
+# Encontramos el tiroteo con el mayor número de víctimas
+tiroteo_max_victimas_2015_2016 <- datos_2015_2016 %>%
+  filter(Total.victims == max(Total.victims, na.rm = TRUE))
+
+# Vemos los detalles del tiroteo 
+print(tiroteo_max_victimas_2015_2016)
+```
+
+Omar Mateen, de 29 años, llevó a cabo un ataque en el club nocturno Pulse en Orlando en las primeras horas del 12 de junio de 2016. Durante este suceso, Mateen disparó contra los asistentes al club, resultando en la muerte de 49 personas y dejando heridas a 53 más. La situación se prolongó durante varias horas debido a un enfrentamiento con la policía, que finalmente irrumpió en el club y terminó con la vida de Mateen. Este ataque es uno de los tiroteos masivos más mortíferos en la historia reciente de los Estados Unidos.
+
+### Análisis de los tiroteos por mes en 2015
+
+```{r}
+
+# Filtramos los datos para el año 2015
+datos_2015 <- datos_limpios %>%
+  filter(Year == "2015")
+
+# Extraemos el mes de la fecha
+datos_2015$Month <- format(datos_2015$Date, "%m")
+
+# Agrupamos por mes y contamos el número de tiroteos
+monthly_shootings_2015 <- datos_2015 %>%
+  group_by(Month) %>%
+  summarise(Shootings = n(), .groups = 'drop')
+
+# Vemos los datos
+print(monthly_shootings_2015)
+```
+
+```{r}
+
+# Guardamos en una variable los meses y en otra los tiroteos
+shootings_by_month_2015 <- monthly_shootings_2015$Shootings
+months_2015 <- monthly_shootings_2015$Month
+
+# Creamos el gráfico de barras para los meses de 2015
+barplot(shootings_by_month_2015,
+        names.arg = months_2015,  
+        xlab = "Mes",      
+        ylab = "Número de tiroteos",  
+        main = "Número de tiroteos por mes en 2015",  
+        col = "darkred",  
+        las = 2,            
+        cex.names = 0.6,    
+        cex.axis = 0.7,     
+        ylim = c(0, max(shootings_by_month_2015) * 1.2) 
+)
+```
+
+El gráfico muestra el número de tiroteos que ocurrieron en cada mes del año 2015. Observamos que febrero tiene el mayor número de tiroteos con 12 incidentes, seguido de noviembre y mayo con 7. Otros meses, como marzo y abril, también presentan un número relativamente alto de tiroteos en comparación con otros meses.
+
+```{r}
+
+# Agrupamos por mes y calculamos estadísticas descriptivas
+monthly_stats_2015 <- datos_2015 %>%
+  group_by(Month) %>%
+  summarise(
+    Shootings = n(),
+    Mean_Fatalities = mean(Fatalities, na.rm = TRUE),
+    Median_Fatalities = median(Fatalities, na.rm = TRUE),
+    Total_Fatalities = sum(Fatalities, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Vemos las estadísticas descriptivas
+print(monthly_stats_2015)
+```
+
+1.  **Frecuencia de Tiroteos por Mes**:
+
+    -   **Febrero** tuvo el mayor número de tiroteos (12), seguido de **noviembre** (7) y **mayo** (7).
+
+    -   **Septiembre** y **diciembre** registraron los menos tiroteos (3 cada uno).
+
+2.  **Fatalidades por Mes**:
+
+    -   **Diciembre** presenta la mayor media de fatalidades (10.7) y la mediana más alta (14), sugiriendo que ocurrieron incidentes con un número muy alto de víctimas.
+
+    -   **Agosto** también muestra una alta media de fatalidades (4.25), a pesar del menor número de tiroteos (4).
+
+3.  **Total de Fatalidades**:
+
+    -   **Diciembre** y **febrero** sobresalen con los totales más altos de fatalidades (32 y 38, respectivamente).
+
+    -   Otros meses con altos totales de fatalidades incluyen **noviembre** (22) y **octubre** (20).
+
+4.  **Mediana de Fatalidades**:
+
+    -   La mediana de fatalidades por tiroteo fue generalmente consistente, con la mayoría de los meses mostrando una mediana de alrededor de 3 a 4 fatalidades. Esto indica que, aunque el número de tiroteos varía, la gravedad en términos de víctimas por incidente se mantiene relativamente constante en varios meses.
+
+5.  **Conclusiones**
+
+    Existe una notable variabilidad en el número de tiroteos y en las fatalidades asociadas a lo largo del año. Febrero destaca por su alta frecuencia de tiroteos, mientras que diciembre muestra una gravedad en términos de número de víctimas por incidente.
+
+Haciendo un view de datos_2015, podemos ver que diciembre, a pesar de solo tener registrados 3 tiroteos, dos de ellos tienen un alto número de fatalidades, heridos y víctimas, lo que justifica la elevada media de fatalidades que hemos obtenido.
+
+![](images/clipboard-1000544101.png)
+
+Viendo algunos cógidos relacionados con el tema, el notebook [Toby's Visualizing Social Injustice](https://www.kaggle.com/code/tobymallon/toby-s-visualizing-social-injustice) me dio la idea de visualizar estos datos con un mapa interactivo.
+
+En este código, usan la librería folium, pero yo he decidido usar otra llamada `leaflet`.
+
+Podemos realizar este estudio porque el dataset tiene dos columnas relacionadas con la posición geográfica, que son **Latitude** y **Longitude**.
+
+```{r}
+
+# Instalams y cargamos la librería 'leaflet' para visualización en mapas
+# install.packages("leaflet")
+library(leaflet)
+
+# Filtramos los datos de 2015 con información geográfica
+datos_2015_geo <- datos_2015 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+
+# Creamos una paleta de colores más oscura para los meses
+pal <- colorFactor(palette = brewer.pal(8, "Dark2"), domain = datos_2015_geo$Date)
+
+# Creamos un mapa interactivo
+map <- leaflet(datos_2015_geo) %>%
+  addTiles() %>%
+  addCircles(
+    lat = ~Latitude, lng = ~Longitude, weight = 1,
+    radius = ~Fatalities * 10000, 
+    popup = ~paste("Fecha:", Date, "<br>", "Fatalities:", Fatalities),
+    color = ~pal(Date), fillOpacity = 0.7
+  )
+
+# Mostramos el mapa
+map
+```
+
+El mapa interactivo muestra la distribución geográfica de los tiroteos en Estados Unidos durante 2015, destacando una alta concentración en áreas como California y Oregon. Los círculos varían en tamaño según el número de fatalidades, con incidentes particularmente graves en California, que presenta el círculo más grande.
+
+```{r}
+
+# Filtramos los datos para California/Los Ángeles utilizando términos generales
+datos_la <- datos_2015 %>% filter(grepl("Los Angeles|LA|California", Location, ignore.case = TRUE))
+
+# Vemos los datos filtrados
+print(datos_la)
+```
+
+Analizamos el círculo más grande, que fue un tiroteo en California el 2 de diciembre de 2015:
+
+```{r}
+
+# Filtramos los datos para la fecha específica
+tiroteo_2015_12_02 <- datos_la %>% filter(Date == as.Date("2015-12-02"))
+
+# Vemos los datos filtrados
+print(tiroteo_2015_12_02)
+```
+
+El 2 de diciembre de 2015, hubo un tiroteo en San Bernardino, California. En este ataque terrorista, Syed Rizwan Farook y Tashfeen Malik llevaron a cabo un tiroteo masivo en el Inland Regional Center durante un evento del Departamento de Salud Pública del Condado de San Bernardino. El ataque resultó en 14 personas muertas y 21 heridas. Los atacantes, que estaban inspirados por ideologías extremistas islámicas, huyeron del lugar y fueron abatidos por la policía en un enfrentamiento posterior ese mismo día.
+
+Me ha parecido interesante que en el dataset, este tiroteo está duplicado, pero uno tiene más datos que el otro, lo que nos lleva a pensar que al actualizar los datos en la nueva versión, añadieron nuevos datos pero no borraron la entrada anterior.
+
+### Análisis de los tiroteos por mes en 2016
+
+```{r}
+
+# Filtramos los datos para el año 2016
+datos_2016 <- datos_limpios %>%
+  filter(Year == "2016")
+
+# Extraemos el mes de la fecha
+datos_2016$Month <- format(datos_2016$Date, "%m")
+
+# Agrupamos por mes y contamos el número de tiroteos
+monthly_shootings_2016 <- datos_2016 %>%
+  group_by(Month) %>%
+  summarise(Shootings = n(), .groups = 'drop')
+
+# Vemos los datos
+print(monthly_shootings_2016)
+```
+
+```{r}
+
+# Guardamos en una variable los meses y en otra los tiroteos
+shootings_by_month_2016 <- monthly_shootings_2016$Shootings
+months_2016 <- monthly_shootings_2016$Month
+
+# Creamos el gráfico de barras para los meses de 2016
+barplot(shootings_by_month_2016,
+        names.arg = months_2016,  
+        xlab = "Mes",      
+        ylab = "Número de tiroteos",  
+        main = "Número de tiroteos por mes en 2016",  
+        col = "purple4",  # Color para 2016 (dark purple)
+        las = 2,            
+        cex.names = 0.6,    
+        cex.axis = 0.7,     
+        ylim = c(0, max(shootings_by_month_2016) * 1.2) 
+)
+```
+
+El análisis del gráfico de tiroteos por mes en 2016 revela algunas conclusiones importantes en la distribución temporal de los incidentes. La alta actividad en febrero y marzo seguida de una disminución sostenida sugiere que en estos dos meses ocurrieron muchos más tiroteos de lo normal, con una cifra de unos 22 tiroteos en ambos meses.
+
+```{r}
+
+# Agrupamos por mes y calculamos estadísticas descriptivas
+monthly_stats_2016 <- datos_2016 %>%
+  group_by(Month) %>%
+  summarise(
+    Shootings = n(),
+    Mean_Fatalities = mean(Fatalities, na.rm = TRUE),
+    Median_Fatalities = median(Fatalities, na.rm = TRUE),
+    Total_Fatalities = sum(Fatalities, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Vemos las estadísticas descriptivas
+print(monthly_stats_2016)
+```
+
+1.  **Frecuencia de Tiroteos por Mes:**
+
+    -   **Febrero y marzo** tuvieron el mayor número de tiroteos (21), seguidos de **abril** (12).
+
+    -   **Junio**, **julio** y **septiembre** registraron los menos tiroteos (1 o 2 cada uno).
+
+2.  **Fatalidades por Mes:**
+
+    -   **Junio** presenta la mayor media de fatalidades (49) y una mediana también muy alta (49), indicando un incidente con un número extremadamente alto de víctimas.
+
+3.  **Total de Fatalidades:**
+
+    -   **Febrero** y **marzo** sobresalen con los totales más altos de fatalidades (53 y 45, respectivamente), además de junio, ya mencionado antes.
+
+    -   **Enero** y **abril** también tienen altos totales de fatalidades (23 y 10, respectivamente).
+
+4.  **Mediana de Fatalidades:**
+
+    -   La mediana de fatalidades por tiroteo fue generalmente consistente, con la mayoría de los meses mostrando una mediana de alrededor de 2 fatalidades, excepto en abril (0) y junio (49). Esto indica que, aunque el número de tiroteos varía, la gravedad en términos de víctimas por incidente se mantiene relativamente constante en varios meses.
+
+5.  **Conclusiones:**
+
+    -   **Febrero** y **marzo** destacan por su alta frecuencia de tiroteos, mientras que **junio** muestra una gravedad en términos de número de víctimas por incidente.
+
+Al igual que en 2015, podemos hacer un análisis con un mapa interactivo gracias a las columnas de Latitude y Longitude del dataset.
+
+```{r}
+
+# Instalams y cargamos la librería 'leaflet' para visualización en mapas
+# install.packages("leaflet")
+# library(leaflet)
+
+# Filtramos los datos de 2016 con información geográfica
+datos_2016_geo <- datos_2016 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+
+# Creamos una paleta de colores más oscura para los meses
+pal <- colorFactor(palette = brewer.pal(8, "Dark2"), domain = datos_2016_geo$Date)
+
+# Creamos un mapa interactivo
+map <- leaflet(datos_2016_geo) %>%
+  addTiles() %>%
+  addCircles(
+    lat = ~Latitude, lng = ~Longitude, weight = 1,
+    radius = ~Fatalities * 10000, 
+    popup = ~paste("Fecha:", Date, "<br>", "Fatalities:", Fatalities),
+    color = ~pal(Date), fillOpacity = 0.7
+  )
+
+# Mostramos el mapa
+map
+```
+
+Cabe destacar, que el tiroteo con mayor número de víctimas y de fatalidades, que hemos estudiado más arriba (Orlando nightclub massacre), no aparece en el mapa porque no tiene datos de latitud ni longitud.
+
+# Ley de Zipf
+
+La ley de Zipf determina que la frecuencia de aparición de una palabra es proporcional al inverso de la posición que ocupa dicha palabra según su número de apariciones.
+
+Cargamos y limpiamos los datos:
+
+```{r}
+
+# Definimos una cadena de caracteres para remover ciertas entidades HTML
+remove_reg <- "&amp;|&lt;|&gt;|&quot;|&apos;"
+
+# Proceso de limpieza del dataframe 'datos_limpios'
+tidy_datos_limpios <- datos_limpios %>%
+  mutate(Summary = str_remove_all(Summary, remove_reg)) %>%  # Removemos entidades HTML
+  mutate(Summary = str_remove_all(Summary, "[^[:alnum:][:space:]]"))  # Removemos caracteres no alfanuméricos
+
+# Verificamos los datos limpios
+print(head(tidy_datos_limpios))
+
+# Guardamos el conjunto de datos limpio para análisis posterior
+save(tidy_datos_limpios, file = "tidy_datos_limpios.rda")
+```
+
+Tokenización y Conteo de Frecuencias:
+
+```{r}
+
+# Desglosamos el contenido de los textos en palabras individuales (tokenización)
+datos_words <- tidy_datos_limpios %>%
+  unnest_tokens(word, Summary)
+
+# Filtramos las stop words
+datos_words <- datos_words %>%
+  anti_join(stop_words, by = "word")
+
+# Contamos la frecuencia de palabras por estado
+datos_words <- datos_words %>%
+  count(State, word, sort = TRUE)
+
+# Verificamos los datos con las frecuencias de palabras por estado
+print(head(datos_words))
+
+# Calculamos el total de palabras por estado
+total_words <- datos_words %>% 
+  group_by(State) %>% 
+  summarize(total = sum(n))
+
+# Verificamos los totales de palabras por estado
+print(total_words)
+
+# Unimos el total de palabras de vuelta con las frecuencias individuales de palabras
+datos_words <- left_join(datos_words, total_words, by = "State")
+
+# Verificamos los datos unidos
+print(head(datos_words))
+```
+
+## Filtrado y Visualización de la Proporción de Palabras:
+
+```{r}
+
+# Filtramos los datos para incluir solo los estados con más registros
+top_states <- datos_words %>%
+  group_by(State) %>%
+  summarize(total_registros = n()) %>%
+  top_n(7, wt = total_registros) %>%
+  pull(State)
+
+# Filtramos los datos para incluir solo estos estados
+datos_filtrados <- datos_words %>%
+  filter(State %in% top_states)
+
+# Eliminamos filas donde 'State' es NA
+datos_filtrados <- datos_filtrados %>%
+  filter(!is.na(State))
+
+# Verificamos que no haya valores NA en 'n' o 'total'
+datos_filtrados <- datos_filtrados %>%
+  filter(!is.na(n) & !is.na(total))
+
+# Creamos una nueva columna para la proporción de palabras
+datos_filtrados <- datos_filtrados %>%
+  mutate(proporcion = n / total)
+
+# Verificamos los datos con la nueva columna de proporción
+print(head(datos_filtrados))
+
+# Ajustamos los límites del eje X para asegurarnos de que las proporciones se muestren correctamente
+ggplot(datos_filtrados, aes(x = proporcion, fill = State)) +
+  geom_histogram(show.legend = FALSE, bins = 30) +
+  facet_wrap(~State, ncol = 2, scales = "free_y") +
+  labs(x = "Proporción de palabras", y = "Frecuencia", title = "Histograma de Proporción de Palabras por Estado")
+
+```
+
+La gráfica presenta la proporción de palabras en los resúmenes de los tiroteos, dividida por estado:
+
+-   **Arizona**: La mayoría de las palabras tienen una proporción muy baja, con algunas palabras con una proporción ligeramente mayor. Esto sugiere que las descripciones de los tiroteos en Arizona contienen una amplia variedad de palabras, sin que ninguna palabra domine significativamente.
+
+-   **California**: Similar a Arizona, aunque hay una mayor cantidad de palabras con una proporción baja pero consistente. Esto puede indicar una mayor variedad en los incidentes descritos.
+
+-   **Florida**: La distribución es similar a la de California.
+
+-   **North Carolina**: Tiene una distribución más plana con una mayor cantidad de palabras con proporciones bajas, sugiriendo una mayor diversidad en los términos usados para describir los incidentes.
+
+-   **Texas**: Muestra una distribución similar a los otros estados, con la mayoría de las palabras teniendo proporciones muy bajas.
+
+-   **Washington**: También tiene una proporción baja de palabras, con algunas palabras destacando ligeramente más que otras.
+
+## **Cálculo de TF-IDF** **(frecuencia de término - frecuencia de documento inversa):**
+
+```{r fig.width=12, fig.height=17}
+
+# Calculamos tf-idf para identificar palabras importantes en cada estado
+datos_tf_idf <- datos_filtrados %>%
+  bind_tf_idf(word, State, n)
+
+# Vemos el dataframe de tf-idf para cada palabra
+print(head(datos_tf_idf))
+
+# Ordenamos las palabras en base a su valor tf-idf descendente
+datos_tf_idf %>%
+  select(-total) %>%
+  arrange(desc(tf_idf)) %>%
+  head(10)  # Mostramos solo las primeras 10 filas
+
+# Graficamos las 15 palabras más altas en tf-idf por estado para identificar palabras distintivas
+datos_tf_idf %>%
+  group_by(State) %>%
+  slice_max(tf_idf, n = 7) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = State)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~State, ncol = 2, scales = "free") +
+  labs(x = "tf-idf", y = NULL)
+
+```
+
+La gráfica presenta las palabras más distintivas en los resúmenes de tiroteos por estado, utilizando la métrica tf-idf:
+
+1.  Arizona
+
+    -   **Palabras destacadas**: "arizona", "session", "phoenix", "college".
+
+    -   La palabra "arizona" es naturalmente destacada al estar en el propio nombre del estado. "Phoenix", la capital del estado, sugiere que varios incidentes pueden haber ocurrido allí. La presencia de "college" y "session" puede indicar incidentes en instituciones educativas o durante eventos específicos en estos lugares.
+
+2.  California
+
+    -   **Palabras destacadas**: "california", "santa", "san", "postal", "worker".
+
+    -   "California" destaca como es lógico por ser el nombre del estado. "Santa" y "San" probablemente se refieren a ciudades como Santa Ana y San Francisco. "Postal" y "worker" pueden indicar tiroteos relacionados con lugares de trabajo, como oficinas postales.
+
+3.  Florida
+
+    -   **Palabras destacadas**: "florida", "party", "orlando", "nightclub", "gunpoint".
+
+    -   "Florida" resalta por ser el nombre del estado. "Orlando" sugiere incidentes en esta ciudad específica. "Party", "nightclub" y "gunpoint" indican que varios tiroteos ocurrieron en eventos sociales y clubes nocturnos, destacando la naturaleza de estos incidentes.
+
+4.  North Carolina
+
+    -   **Palabras destacadas**: "north", "carolina", "mobile", "happened", "boom".
+
+    -   "North" y "Carolina" son palabras que representan el estado. "Mobile" podría referirse a comunicaciones móviles relacionadas con los incidentes. "Happened" y "boom" indican descripciones de los eventos en sí, con "boom" posiblemente refiriéndose a explosiones o sonidos de disparos.
+
+5.  Texas
+
+    -   **Palabras destacadas**: "texas", "hood", "army", "fort", "specialist".
+
+    -   "Texas" destaca como el nombre del estado. "Hood" podría referirse a Fort Hood, una base militar en Texas, y las palabras "army" y "fort" sugieren tiroteos relacionados con personal militar o en instalaciones militares. "Specialist" podría referirse a una especialización militar o a individuos específicos en esos incidentes.
+
+6.  Washington
+
+    -   **Palabras destacadas**: "washington", "seattle", "coffee", "womans".
+
+    -   "Washington" es el nombre del estado. "Seattle" indica incidentes en esta ciudad principal. "Coffee" podría estar relacionado con tiroteos en cafeterías. "Womans" sugiere la posible implicación de mujeres ya sea como víctimas o participantes en los incidentes.
+
+## **Análisis de la Ley de Zipf:**
+
+```{r}
+
+# La frecuencia de palabra es inversamente proporcional a su rango en la lista de frecuencia
+freq_by_rank <- datos_filtrados %>% 
+  group_by(State) %>%
+  mutate(rank = row_number(),  # Asignamos un rango basado en frecuencia de palabras
+         term_frequency = n / total) %>%  # Calculamos frecuencia de término
+  ungroup()
+
+# Graficamos la relación entre el rango de las palabras y su frecuencia usando una escala logarítmica
+freq_by_rank %>% 
+  ggplot(aes(rank, term_frequency, color = State)) + 
+  geom_line(linewidth = 1.1, alpha = 0.8) + 
+  scale_x_log10() +  # Escala logarítmica para el rango
+  scale_y_log10()    # Escala logarítmica para la frecuencia
+
+# Realizamos una regresión lineal para analizar la relación Zipf y obtener un modelo estadístico
+zipf <- lm(log10(term_frequency) ~ log10(rank), data = freq_by_rank)
+# Resumen estadístico del modelo lineal para entender la relación Zipf
+summary(zipf)
+
+# Representación visual de la regresión lineal con los parámetros del modelo, mostrando la relación de la Ley de Zipf
+freq_by_rank %>% 
+  ggplot(aes(rank, term_frequency, color = State)) + 
+  geom_abline(intercept = coef(zipf)[1], slope = coef(zipf)[2],  # Utilizamos los coeficientes de la regresión
+              color = "gray50", linetype = 2) +
+  geom_line(linewidth = 1.1, alpha = 0.8) + 
+  scale_x_log10() +  # Escala logarítmica para el rango
+  scale_y_log10()    # Escala logarítmica para la frecuencia
+
+```
+
+La gráfica presenta la relación entre la frecuencia de los términos y su rango en los resúmenes de tiroteos para seis estados diferentes:
+
+1\. Categorías Cerca de la Línea de Rayas
+
+-   **Descripción**: Las categorías que están cerca de la línea de rayas (la expectativa de la Ley de Zipf) están utilizando palabras cuyas frecuencias y rangos tienen una correlación esperada según esta ley.
+
+-   **Observación**: En esta gráfica, las líneas para Arizona, California, Florida, North Carolina, Texas y Washington se agrupan bastante cerca de la línea de rayas, especialmente en los rangos bajos y medios. Esto sugiere que los resúmenes de los tiroteos en estos estados utilizan palabras de manera que sigue la distribución esperada por la Ley de Zipf. La cercanía a la línea de rayas indica un uso consistente de términos más frecuentes y menos frecuentes.
+
+2\. Categorías Por Encima de la Línea de Rayas
+
+-   **Descripción**: Si una categoría se encuentra por encima de la línea de rayas, esto podría sugerir que las palabras en estos rangos tienen una frecuencia más alta de lo esperado por la Ley de Zipf.
+
+-   **Observación**: En la gráfica, no hay muchas categorías significativamente por encima de la línea de rayas, pero hay puntos específicos donde algunas líneas de estados se elevan brevemente por encima de la línea. Las palabras en estos rangos podrían estar siendo utilizadas con mayor frecuencia, posiblemente debido a repeticiones de ciertos términos clave en los resúmenes de tiroteos. Es el caso de Arizona y North California por la zona central.
+
+3\. Categorías Por Debajo de la Línea de Rayas
+
+-   **Descripción**: Las categorías que se ubican debajo de la línea de rayas están usando palabras con menos frecuencia de lo que predice la Ley de Zipf para sus rangos correspondientes.
+
+-   **Observación**: Algunas líneas, especialmente en los rangos altos, se encuentran por debajo de la línea de rayas. Esto podría indicar una mayor diversidad de palabras utilizadas en los resúmenes de tiroteos, sugiriendo que los descripciones son variadas y menos focalizadas en ciertos términos. Es el caso de California en los rangos más altos.
+
+En conclusión, la gráfica sugiere que la distribución de la frecuencia de las palabras en los resúmenes de tiroteos en estos seis estados sigue en gran medida la Ley de Zipf.
+
+# Creación de corpus y análisis de texto
+
+## Creación del corpus
+
+Primero, creamos un corpus con docvars:
+
+```{r}
+
+# Creamos un corpus con el contenido de los resúmenes
+corpus_tiroteos <- quanteda::corpus(datos_limpios$Summary)
+
+# Añadimos metadatos (docvars) al corpus
+docvars(corpus_tiroteos, "Title") <- datos_limpios$Title
+docvars(corpus_tiroteos, "Location") <- datos_limpios$Location
+docvars(corpus_tiroteos, "Date") <- datos_limpios$Date
+docvars(corpus_tiroteos, "Incident.Area") <- datos_limpios$Incident.Area
+docvars(corpus_tiroteos, "Open.Close.Location") <- datos_limpios$Open.Close.Location
+docvars(corpus_tiroteos, "Target") <- datos_limpios$Target
+docvars(corpus_tiroteos, "Cause") <- datos_limpios$Cause
+docvars(corpus_tiroteos, "Summary") <- datos_limpios$Summary
+docvars(corpus_tiroteos, "Fatalities") <- datos_limpios$Fatalities
+docvars(corpus_tiroteos, "Injured") <- datos_limpios$Injured
+docvars(corpus_tiroteos, "Total.victims") <- datos_limpios$Total.victims
+docvars(corpus_tiroteos, "Policeman.Killed") <- datos_limpios$Policeman.Killed
+docvars(corpus_tiroteos, "Age") <- datos_limpios$Age
+docvars(corpus_tiroteos, "Mental.Health.Issues") <- datos_limpios$Mental.Health.Issues
+docvars(corpus_tiroteos, "Race") <- datos_limpios$Race
+docvars(corpus_tiroteos, "Gender") <- datos_limpios$Gender
+docvars(corpus_tiroteos, "Latitude") <- datos_limpios$Latitude
+docvars(corpus_tiroteos, "Longitude") <- datos_limpios$Longitude
+docvars(corpus_tiroteos, "City") <- datos_limpios$City
+docvars(corpus_tiroteos, "State") <- datos_limpios$State
+
+# Mostramos resumen del corpus con los metadatos añadidos
+# summary(corpus_tiroteos)
+```
+
+Creación de los tokens y limpieza:
+
+```{r}
+
+# Tokenización del corpus, limpiando el texto
+tok_tiroteos <- quanteda::tokens(corpus_tiroteos,
+                                 what = "word",
+                                 remove_numbers = TRUE,
+                                 remove_punct = TRUE,
+                                 remove_symbols = TRUE,
+                                 remove_separators = TRUE,
+                                 remove_twitter = TRUE,
+                                 remove_url = TRUE,
+                                 include_docvars = TRUE)
+
+# Eliminamos las stopwords en inglés
+tok_tiroteos <- tokens_select(tok_tiroteos, 
+                              pattern = stopwords("en"), 
+                              selection = "remove")
+```
+
+```{r}
+
+# Definimos palabras clave relacionadas con los tiroteos
+palabras_clave <- c("shooting", "victims", "gunman", "attack", "fire", "killed", "injured", "dead", "police", "suspect")
+
+# Utilizamos la función kwic() para buscar las palabras clave en los tokens
+kwic_tokens_tiroteos <- quanteda::kwic(tok_tiroteos, pattern = palabras_clave)
+View(kwic_tokens_tiroteos)
+```
+
+## Palabras frecuentes
+
+Mostramos un gráfico donde se visualiza la frecuencia en el uso de palabras en el dataset:
+
+```{r}
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos <- dfm(tok_tiroteos)
+
+# Extracción de frecuencias de términos
+frequencies <- textstat_frequency(dfm_tiroteos, n = 10)
+
+# Visualización de las frecuencias
+print(frequencies)
+
+# Gráfico de barras de las palabras más frecuentes
+grafico_frecuencia <- ggplot(frequencies, 
+                             aes(x = reorder(feature, -frequency), 
+                                 y = frequency, 
+                                 fill = feature)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "Palabras", y = "Frecuencia", title = "Frecuencia de Palabras en Resúmenes de Tiroteos") +
+  theme_minimal() + # Usar un tema minimalista
+  scale_fill_brewer(palette = "Set3") # Utilizar una paleta de colores de ColorBrewer
+
+# Mostramos el gráfico
+print(grafico_frecuencia)
+```
+
+El gráfico muestra la frecuencia de las palabras más comunes encontradas en los resúmenes de tiroteos:
+
+1.  **Palabras Más Frecuentes**:
+
+    -   **"shot"**: Con una frecuencia de aproximadamente 180, es la palabra más común en los resúmenes. Esto indica que los tiroteos se describen frecuentemente en términos de disparos.
+
+    -   **"killed"**: Con una frecuencia similar a "shot", esta palabra es muy utilizada para describir las fatalidades en los incidentes.
+
+    -   **"two"**: Esta palabra tiene una frecuencia notable, lo que podría indicar que en muchos incidentes se mencionan dos víctimas o dos disparos.
+
+2.  **Palabras Relacionadas con Víctimas y Perpetradores**:
+
+    -   **"man"**, **"people"** y **"shooter"**: Estas palabras son comunes, lo que sugiere que los resúmenes se enfocan en describir tanto a los perpetradores como a las víctimas. "Man" y "shooter" indican la referencia frecuente a los atacantes, mientras que "people" puede referirse a las víctimas.
+
+    -   **"police"**: Su frecuencia muestra que la intervención policial es un tema recurrente en los resúmenes de los incidentes.
+
+3.  **Palabras que Describen el Evento**:
+
+    -   **"shooting"** y **"killing"**: Estas palabras reflejan directamente la naturaleza de los incidentes y se utilizan para describir lo que ocurrió.
+
+    -   **"three"** y **"two"**: La aparición de números específicos sugiere que se mencionan con frecuencia la cantidad de víctimas o disparos en los resúmenes.
+
+## Palabras frecuentes agrupadas por Causa
+
+```{r}
+
+# Extracción de frecuencias de términos por causa
+frequencies <- textstat_frequency(dfm_tiroteos, n = 10, groups = Cause)
+
+# Calculamos la frecuencia total de cada causa
+causa_frecuencia <- frequencies %>%
+  group_by(group) %>%
+  summarise(total_frecuencia = sum(frequency)) %>%
+  arrange(desc(total_frecuencia))
+
+# Seleccionamos las 8 causas más comunes
+top_causas <- causa_frecuencia %>%
+  top_n(8, total_frecuencia) %>%
+  pull(group)
+
+# Filtramos las frecuencias para incluir solo las causas más comunes
+frequencies_filtradas <- frequencies %>%
+  filter(group %in% top_causas)
+
+# Filtramos filas con 'group' vacío o NA
+frequencies_filtradas <- frequencies_filtradas %>%
+  filter(group != "" & !is.na(group))
+
+
+# Gráfico de barras de las palabras más frecuentes agrupadas por las causas más comunes
+grafico_frecuencia <- ggplot(frequencies_filtradas, 
+                             aes(x = feature, 
+                                 y = frequency, 
+                                 fill = group)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +   # Le damos la vuelta al grafico
+  labs(x = "Palabras", y = "Frecuencia", title = "Frecuencia de Palabras Agrupadas por Causas Más Comunes")
+
+# Mostramos el gráfico
+print(grafico_frecuencia)
+```
+
+Las palabras con mayor frecuencia en los resúmenes de tiroteos varían según las causas más comunes. La causa "anger" se asocia principalmente con palabras como "shot", "shooting" y "people,", indicando incidentes que involucran disparos y personas. En los casos de "domestic dispute, las palabras frecuentes incluyen "officers", "wife," y "home," lo que sugiere que estos incidentes a menudo ocurren en el hogar y pueden involucrar a la policía. La "frustration" está relacionada con palabras como "shcool", "suicide" y "student" indicando tiroteos en centros educativos por alumnos frustrados por alguna causa.
+
+Para la causa "psycho," las palabras más comunes son "shot", "shooting," y "killed," reflejando incidentes violentos que resultan en muertes y tiroteos. La "revenge" se asocia principalmente con "shooting" y "killed" sugiriendo que la venganza suele manifestarse en tiroteos. En los casos de "terrorism," las palabras frecuentes son "shot", "shooting", "people", "school", "police" indicando que estos incidentes ocurren en entornos escolares y afectan a grupos de personas, con policiía involucrada. Finalmente, la causa "unemployment" está vinculada con palabras como "employee", "former", "fired" y "coworkers", mostrando que los incidentes relacionados con el desempleo tienden a involucrar situaciones laborales y compañeros de trabajo.
+
+## Wordclouds
+
+Creamos un wordcloud:
+
+```{r}
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos, 
+                   min_count = 10,    # Solo mostramos palabras con al menos 10 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+La nube de palabras destaca las principales palabras asociadas con los resúmenes de tiroteos en Estados Unidos. Palabras como "killed", "shot", "shooter", "police", y "school" son particularmente frecuentes, subrayando la gravedad y el impacto de estos eventos en la sociedad. La prominencia de términos como "two", "people", "wounded", y "injured" también revela la extensión del daño y el alcance de las víctimas en estos incidentes.
+
+Ahora, generamos nuevos wordclouds con bigramas para comparar con el anterior:
+
+```{r}
+
+# Ahora probamos a hacerlo con bigramas
+tok_tiroteos_2 <- tokens_ngrams(tok_tiroteos, n = 2)
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_2 <- dfm(tok_tiroteos_2)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_2, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_2, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_2, 
+                   min_count = 5,    # Solo mostramos palabras con al menos 5 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+La nube de palabras con bigramas destaca términos clave relacionados con incidentes de tiroteos en Estados Unidos. Bigrams como "opened fire", "shot killed", y "began shooting" describen las acciones violentas y sus consecuencias. Términos como "high school", "elementary school", y "police officer" subrayan los entornos y las personas frecuentemente involucradas. Además, "committing suicide" y "fatally shot" reflejan el desenlace trágico de muchos de estos eventos.
+
+# Creación de corpus y análisis de texto para causas determinadas
+
+## Filtrado por causas
+
+Nos centramos en tres causas determinadas de interés para el estudio posterior.
+
+He elegido **psycho** porque es una causa muy común de tiroteos. Además, he decidido añadir **terrorism** porque he visto que en el anterior gráfico aparecía con bastante frecuencia y sería interesante estudiar de qué tipos de crímenes se trata.
+
+Por último, he elegido estudiar **domestic dispute** porque es una causa muy común pero diferente a las demás, ya que suelen tratarse de crímenes más pasionales y que ocurren en el ámbito doméstico
+
+```{r}
+
+# Causas de interes
+interesantes <- c("terrorism", "psycho", "domestic dispute")
+
+# Preparación del gráfico 'grafico_frecuencia_2' con filtrado para causas específicas
+grafico_frecuencia_2 <- ggplot(
+  data = frequencies_filtradas[frequencies_filtradas$group %in% interesantes, ], 
+                             aes(x = fct_reorder(feature, frequency), 
+                                 y = frequency, 
+                                 fill = group)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Le damos la vuelta al grafico
+  labs(x = "Palabras", y = "Frecuencia", title = "Frecuencia de Palabras Agrupadas por Causas de Interés")
+
+# Mostramos el grafico
+print(grafico_frecuencia_2)
+```
+
+La palabra "killed" (asesinado) es muy frecuente en los resúmenes relacionados con problemas psicológicos y terrorismo, indicando que estos incidentes a menudo resultan en muertes. La palabra "people" (personas) es prominente en los resúmenes de terrorismo, subrayando que estos eventos suelen involucrar a múltiples personas. Palabras como "shooting" (tiroteo) y "shot" (disparado) son frecuentes en incidentes relacionados tanto con problemas psicológicos como con terrorismo, reflejando la naturaleza violenta de estos eventos. Además, términos como "wife" (esposa) y "girlfriend" (novia) y "home" (casa) son relevantes para domestic dispute, lo que indica que son crímenes relacionados con personas cercanas y dentro del hogar.
+
+## Estudiamos TERRORISM
+
+Extraemos un subconjunto de datos en el que solo seleccionamos aquellos con la causa de terrorism:
+
+```{r}
+
+# Extraemos subconjunto de terrorism
+datos_terrorism <- subset(datos_limpios,
+                                  Cause == "terrorism")
+
+# Guardamos el conjunto de datos de terrorismo
+save(datos_terrorism, file = "datos_terrorism.rda")
+```
+
+Creamos el corpus y los tokens:
+
+```{r}
+
+# Creamos un corpus con el contenido de los resúmenes
+corpus_tiroteos_terrorism <- quanteda::corpus(datos_terrorism$Summary)
+
+# Añadimos metadatos (docvars) al corpus
+docvars(corpus_tiroteos_terrorism, "Title") <- datos_terrorism$Title
+docvars(corpus_tiroteos_terrorism, "Location") <- datos_terrorism$Location
+docvars(corpus_tiroteos_terrorism, "Date") <- datos_terrorism$Date
+docvars(corpus_tiroteos_terrorism, "Incident.Area") <- datos_terrorism$Incident.Area
+docvars(corpus_tiroteos_terrorism, "Open.Close.Location") <- datos_terrorism$Open.Close.Location
+docvars(corpus_tiroteos_terrorism, "Target") <- datos_terrorism$Target
+docvars(corpus_tiroteos_terrorism, "Cause") <- datos_terrorism$Cause
+docvars(corpus_tiroteos_terrorism, "Summary") <- datos_terrorism$Summary
+docvars(corpus_tiroteos_terrorism, "Fatalities") <- datos_terrorism$Fatalities
+docvars(corpus_tiroteos_terrorism, "Injured") <- datos_terrorism$Injured
+docvars(corpus_tiroteos_terrorism, "Total.victims") <- datos_terrorism$Total.victims
+docvars(corpus_tiroteos_terrorism, "Policeman.Killed") <- datos_terrorism$Policeman.Killed
+docvars(corpus_tiroteos_terrorism, "Age") <- datos_terrorism$Age
+docvars(corpus_tiroteos_terrorism, "Mental.Health.Issues") <- datos_terrorism$Mental.Health.Issues
+docvars(corpus_tiroteos_terrorism, "Race") <- datos_terrorism$Race
+docvars(corpus_tiroteos_terrorism, "Gender") <- datos_terrorism$Gender
+docvars(corpus_tiroteos_terrorism, "Latitude") <- datos_terrorism$Latitude
+docvars(corpus_tiroteos_terrorism, "Longitude") <- datos_terrorism$Longitude
+docvars(corpus_tiroteos_terrorism, "City") <- datos_terrorism$City
+docvars(corpus_tiroteos_terrorism, "State") <- datos_terrorism$State
+
+# Mostramos resumen del corpus con los metadatos añadidos
+# summary(corpus_tiroteos_terrorism)
+
+# Tokenización del corpus, limpiando el texto
+tok_tiroteos_terrorism <- quanteda::tokens(corpus_tiroteos_terrorism,
+                                 what = "word",
+                                 remove_numbers = TRUE,
+                                 remove_punct = TRUE,
+                                 remove_symbols = TRUE,
+                                 remove_separators = TRUE,
+                                 remove_twitter = TRUE,
+                                 remove_url = TRUE,
+                                 include_docvars = TRUE)
+
+# Utilizamos la función kwic() para buscar las palabras clave en los tokens
+kwic_tokens_tiroteos_terrorism <- quanteda::kwic(tok_tiroteos_terrorism, pattern = palabras_clave)
+View(kwic_tokens_tiroteos_terrorism)
+
+# Eliminamos las stopwords en inglés
+tok_tiroteos_terrorism <- tokens_select(tok_tiroteos_terrorism, 
+                              pattern = stopwords("en"), 
+                              selection = "remove")
+```
+
+Creamos la DFM y el wordcloud:
+
+```{r}
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_terrorism <- dfm(tok_tiroteos_terrorism)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_terrorism, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_terrorism, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_terrorism, 
+                   min_count = 2,    # Solo mostramos palabras con al menos 2 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+Análisis de la nube de palabras para la causa "terrorism":
+
+La nube de palabras de los tiroteos con causa "terrorismo" revela un patrón de eventos altamente letales y disruptivos, con un impacto significativo en personas y lugares públicos, especialmente en entornos educativos. La presencia prominente de términos como "killed", "people", "shooting", y "school" subraya la gravedad y el contexto común de estos ataques.
+
+Ahora, generamos un nuevo worldcloud con bigramas para comparar con el anterior:
+
+```{r}
+
+# Ahora probamos a hacerlo con bigramas
+tok_tiroteos_terrorism_2 <- tokens_ngrams(tok_tiroteos_terrorism, n = 2)
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_terrorism_2 <- dfm(tok_tiroteos_terrorism_2)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_terrorism_2, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_terrorism_2, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_terrorism_2, 
+                   min_count = 2,    # Solo mostramos palabras con al menos 2 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+La nube de palabras con bigramas resalta frases clave relacionadas con los ataques terroristas en Estados Unidos. Bigramas como "opened fire", "shot killed", y "began shooting" describen las acciones violentas y sus consecuencias. Términos como "high school", "elementary school", y "police officer" subrayan los entornos y las personas frecuentemente involucradas. Además, bigramas como "committing suicide" y "fatally shot" reflejan el desenlace trágico de muchos de estos eventos.
+
+Este wordcloud se parece mucho al wordcloud de bigramas de las causas más comunes, por lo que ahora sabemos que los términos más frecuentes que nos aparecieron en ese wordcloud eran de terrorismo.
+
+## Estudiamos PSYCHO
+
+Extraemos un subconjunto de datos en el que solo seleccionamos aquellos con la causa de psycho:
+
+```{r}
+
+# Extraemos subconjunto de psycho
+datos_psycho <- subset(datos_limpios,
+                                  Cause == "psycho")
+
+# Guardamos el conjunto de datos de psycho
+save(datos_psycho, file = "datos_psycho.rda")
+```
+
+Creamos el corpus y los tokens:
+
+```{r}
+
+# Creamos un corpus con el contenido de los resúmenes
+corpus_tiroteos_psycho <- quanteda::corpus(datos_psycho$Summary)
+
+# Añadimos metadatos (docvars) al corpus
+docvars(corpus_tiroteos_psycho, "Title") <- datos_psycho$Title
+docvars(corpus_tiroteos_psycho, "Location") <- datos_psycho$Location
+docvars(corpus_tiroteos_psycho, "Date") <- datos_psycho$Date
+docvars(corpus_tiroteos_psycho, "Incident.Area") <- datos_psycho$Incident.Area
+docvars(corpus_tiroteos_psycho, "Open.Close.Location") <- datos_psycho$Open.Close.Location
+docvars(corpus_tiroteos_psycho, "Target") <- datos_psycho$Target
+docvars(corpus_tiroteos_psycho, "Cause") <- datos_psycho$Cause
+docvars(corpus_tiroteos_psycho, "Summary") <- datos_psycho$Summary
+docvars(corpus_tiroteos_psycho, "Fatalities") <- datos_psycho$Fatalities
+docvars(corpus_tiroteos_psycho, "Injured") <- datos_psycho$Injured
+docvars(corpus_tiroteos_psycho, "Total.victims") <- datos_psycho$Total.victims
+docvars(corpus_tiroteos_psycho, "Policeman.Killed") <- datos_psycho$Policeman.Killed
+docvars(corpus_tiroteos_psycho, "Age") <- datos_psycho$Age
+docvars(corpus_tiroteos_psycho, "Mental.Health.Issues") <- datos_psycho$Mental.Health.Issues
+docvars(corpus_tiroteos_psycho, "Race") <- datos_psycho$Race
+docvars(corpus_tiroteos_psycho, "Gender") <- datos_psycho$Gender
+docvars(corpus_tiroteos_psycho, "Latitude") <- datos_psycho$Latitude
+docvars(corpus_tiroteos_psycho, "Longitude") <- datos_psycho$Longitude
+docvars(corpus_tiroteos_psycho, "City") <- datos_psycho$City
+docvars(corpus_tiroteos_psycho, "State") <- datos_psycho$State
+
+# Mostramos resumen del corpus con los metadatos añadidos
+# summary(corpus_tiroteos_psycho)
+
+# Tokenización del corpus, limpiando el texto
+tok_tiroteos_psycho <- quanteda::tokens(corpus_tiroteos_psycho,
+                                 what = "word",
+                                 remove_numbers = TRUE,
+                                 remove_punct = TRUE,
+                                 remove_symbols = TRUE,
+                                 remove_separators = TRUE,
+                                 remove_twitter = TRUE,
+                                 remove_url = TRUE,
+                                 include_docvars = TRUE)
+
+# Utilizamos la función kwic() para buscar las palabras clave en los tokens
+kwic_tokens_tiroteos_psycho <- quanteda::kwic(tok_tiroteos_psycho, pattern = palabras_clave)
+View(kwic_tokens_tiroteos_psycho)
+
+# Eliminamos las stopwords en inglés
+tok_tiroteos_psycho <- tokens_select(tok_tiroteos_psycho, 
+                              pattern = stopwords("en"), 
+                              selection = "remove")
+```
+
+Creamos la DFM y el wordcloud:
+
+```{r}
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_psycho <- dfm(tok_tiroteos_psycho)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_psycho, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_psycho, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_psycho, 
+                   min_count = 2,    # Solo mostramos palabras con al menos 2 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+Análisis de la nube de palabras para la causa "psycho":
+
+La presencia prominente de términos como "killed", "shot", "shooter", y "police" subraya la violencia y la frecuencia de la intervención policial en estos incidentes. Palabras como "home" y "student" sugieren que estos tiroteos a menudo ocurren en entornos familiares y educativos, respectivamente. Además, la mención frecuente de "suicide" refleja la tendencia de los perpetradores a quitarse la vida después de cometer los actos violentos.
+
+Ahora, generamos un nuevo worldcloud con bigramas para comparar con el anterior:
+
+```{r}
+
+# Ahora probamos a hacerlo con bigramas
+tok_tiroteos_psycho_2 <- tokens_ngrams(tok_tiroteos_psycho, n = 2)
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_psycho_2 <- dfm(tok_tiroteos_psycho_2)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_psycho_2, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_psycho_2, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_psycho_2, 
+                   min_count = 2,    # Solo mostramos palabras con al menos 2 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+La nube de palabras con bigramas para la causa "psycho" revela un patrón de eventos letales y perturbadores, con un impacto significativo tanto en términos de muertes como de heridos. Bigrams como "shot killed", "opened fire", y "began shooting" describen las acciones violentas y sus consecuencias. Términos como "police officer", "high school", y "family members" subrayan los entornos y las personas frecuentemente involucradas. Además, bigramas como "committing suicide" y "committed suicide" reflejan la tendencia de los perpetradores a quitarse la vida después de cometer los actos violentos.
+
+## Estudiamos DOMESTIC DISPUTE
+
+Extraemos un subconjunto de datos en el que solo seleccionamos aquellos con la causa de domestic dispute:
+
+```{r}
+
+# Extraemos subconjunto de domestic dispute
+datos_domestic_dispute <- subset(datos_limpios,
+                                  Cause == "domestic dispute")
+
+# Guardamos el conjunto de datos de domestic dispute
+save(datos_domestic_dispute, file = "datos_domestic_dispute.rda")
+```
+
+Creamos el corpus y los tokens:
+
+```{r}
+
+# Creamos un corpus con el contenido de los resúmenes
+corpus_tiroteos_domestic_dispute <- quanteda::corpus(datos_domestic_dispute$Summary)
+
+# Añadimos metadatos (docvars) al corpus
+docvars(corpus_tiroteos_domestic_dispute, "Title") <- datos_domestic_dispute$Title
+docvars(corpus_tiroteos_domestic_dispute, "Location") <- datos_domestic_dispute$Location
+docvars(corpus_tiroteos_domestic_dispute, "Date") <- datos_domestic_dispute$Date
+docvars(corpus_tiroteos_domestic_dispute, "Incident.Area") <- datos_domestic_dispute$Incident.Area
+docvars(corpus_tiroteos_domestic_dispute, "Open.Close.Location") <- datos_domestic_dispute$Open.Close.Location
+docvars(corpus_tiroteos_domestic_dispute, "Target") <- datos_domestic_dispute$Target
+docvars(corpus_tiroteos_domestic_dispute, "Cause") <- datos_domestic_dispute$Cause
+docvars(corpus_tiroteos_domestic_dispute, "Summary") <- datos_domestic_dispute$Summary
+docvars(corpus_tiroteos_domestic_dispute, "Fatalities") <- datos_domestic_dispute$Fatalities
+docvars(corpus_tiroteos_domestic_dispute, "Injured") <- datos_domestic_dispute$Injured
+docvars(corpus_tiroteos_domestic_dispute, "Total.victims") <- datos_domestic_dispute$Total.victims
+docvars(corpus_tiroteos_domestic_dispute, "Policeman.Killed") <- datos_domestic_dispute$Policeman.Killed
+docvars(corpus_tiroteos_domestic_dispute, "Age") <- datos_domestic_dispute$Age
+docvars(corpus_tiroteos_domestic_dispute, "Mental.Health.Issues") <- datos_domestic_dispute$Mental.Health.Issues
+docvars(corpus_tiroteos_domestic_dispute, "Race") <- datos_domestic_dispute$Race
+docvars(corpus_tiroteos_domestic_dispute, "Gender") <- datos_domestic_dispute$Gender
+docvars(corpus_tiroteos_domestic_dispute, "Latitude") <- datos_domestic_dispute$Latitude
+docvars(corpus_tiroteos_domestic_dispute, "Longitude") <- datos_domestic_dispute$Longitude
+docvars(corpus_tiroteos_domestic_dispute, "City") <- datos_domestic_dispute$City
+docvars(corpus_tiroteos_domestic_dispute, "State") <- datos_domestic_dispute$State
+
+# Mostramos resumen del corpus con los metadatos añadidos
+# summary(corpus_tiroteos_domestic_dispute)
+
+# Tokenización del corpus, limpiando el texto
+tok_tiroteos_domestic_dispute <- quanteda::tokens(corpus_tiroteos_domestic_dispute,
+                                 what = "word",
+                                 remove_numbers = TRUE,
+                                 remove_punct = TRUE,
+                                 remove_symbols = TRUE,
+                                 remove_separators = TRUE,
+                                 remove_twitter = TRUE,
+                                 remove_url = TRUE,
+                                 include_docvars = TRUE)
+
+# Utilizamos la función kwic() para buscar las palabras clave en los tokens
+kwic_tokens_tiroteos_domestic_dispute <- quanteda::kwic(tok_tiroteos_domestic_dispute, pattern = palabras_clave)
+View(kwic_tokens_tiroteos_domestic_dispute)
+
+# Eliminamos las stopwords en inglés
+tok_tiroteos_domestic_dispute <- tokens_select(tok_tiroteos_domestic_dispute, 
+                              pattern = stopwords("en"), 
+                              selection = "remove")
+```
+
+Creamos la DFM y el wordcloud:
+
+```{r}
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_domestic_dispute <- dfm(tok_tiroteos_domestic_dispute)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_domestic_dispute, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_domestic_dispute, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_domestic_dispute, 
+                   min_count = 2,    # Solo mostramos palabras con al menos 2 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+Análisis de la nube de palabras para la causa "domestic dispute":
+
+La nube de palabras para la causa "disputa doméstica" revela un patrón de eventos altamente personales y frecuentemente letales, con un impacto significativo en el entorno familiar. La prominencia de términos como "wife", "girlfriend", "home", y "officers" subraya la naturaleza íntima de estos conflictos y la frecuente intervención policial. Palabras como "shot" y "killed" destacan la violencia y las consecuencias fatales de estos incidentes. La presencia de términos relacionados con familiares, como "children" y "sons", indica que estos tiroteos afectan a múltiples miembros de la familia, no solo a las parejas directamente involucradas.
+
+Ahora, generamos un nuevo worldcloud con bigramas para comparar con el anterior:
+
+```{r}
+
+# Ahora probamos a hacerlo con bigramas
+tok_tiroteos_domestic_dispute_2 <- tokens_ngrams(tok_tiroteos_domestic_dispute, n = 2)
+
+# Creamos una matriz de DFM a partir de los tokens
+# Esta matriz cuenta la frecuencia de cada término
+dfm_tiroteos_domestic_disputeo_2 <- dfm(tok_tiroteos_domestic_dispute_2)
+
+# Extraemos las 20 palabras más frecuentes de la DFM
+topfeatures(dfm_tiroteos_domestic_disputeo_2, 20)
+
+# Extraemos las 100 palabras más frecuentes de la DFM para un análisis más detallado
+topfeatures(dfm_tiroteos_domestic_disputeo_2, 100)
+
+# Establecemos una semilla para la generación de números aleatorios
+set.seed(100)
+
+# Creamos un wordcloud con la matriz de términos por documento
+textplot_wordcloud(dfm_tiroteos_domestic_disputeo_2, 
+                   min_count = 1,    # Solo mostramos palabras con al menos 1 ocurrencias
+                   random_order = FALSE, # Colocamos las palabras más frecuentes en el centro
+                   rotation = 0,         # Las palabras se mostrarán sin rotación (horizontalmente)
+                   color = RColorBrewer::brewer.pal(8,"Spectral")) # Usamos una paleta de colores predefinida
+```
+
+La nube de palabras con bigramas para la causa "disputa doméstica" revela un patrón de eventos personales y letales, con un impacto significativo en el entorno familiar. Bigrams como "wife two", "two sons", y "domestic violence" destacan la naturaleza íntima de estos conflictos y la frecuencia con que afectan a los miembros de la familia, especialmente a esposas e hijos. La presencia de términos relacionados con disparos y muertes como "shot killed" y "committing suicide" subraya la violencia y las consecuencias fatales de estos incidentes.
+
+# TidyText
+
+Usamos `tidytext` porque es una biblioteca flexible en R diseñada específicamente para manipular y analizar datos textuales en formato "tidy". Para este estudio, he decidido hacer el análisis de texto para los datos comparando la columna `Gender` entre **Male** y **Female**, sin tener en cuenta aquellos con valor Unknown.
+
+```{r}
+
+# Verificamos las primeras filas del dataset
+head(datos_limpios)
+
+# Filtramos los datos para incluir solo los generos 'Male' y 'Female'
+datos_filtrados_genero <- datos_limpios %>%
+  filter(Gender %in% c("Male", "Female"))
+
+# Verificamos el número de filas en el nuevo conjunto de datos
+nrow(datos_filtrados_genero)
+```
+
+Creamos un histograma utilizando ggplot2 para la visualizacion por fechas:
+
+```{r}
+
+ggplot(datos_filtrados_genero, 
+       aes(x = Date, 
+           fill = Gender)) +
+  geom_histogram(position = "identity", 
+                 bins = 20, 
+                 show.legend = FALSE) +
+  facet_wrap(~Gender, ncol = 1) +
+  
+  # Agregamos etiquetas al gráfico
+  labs(title = "Histograma de Tiroteos por Género",
+       x = "Fecha del Titoteo",
+       y = "Frecuencia")
+```
+
+Ahora, hacemos una representacion sin histograma:
+
+```{r}
+
+datos_filtrados_genero %>%
+  group_by(Gender, Date) %>%
+  add_count() %>%
+  ggplot(aes(x = Date, 
+             color = Gender, y=n)) +
+  geom_line() +
+  facet_wrap(~ Gender, ncol = 1)
+```
+
+En ambos gráficos de tiroteos por género podemos observar una marcada desigualdad entre hombres y mujeres en la realización de estos actos. Los tiroteos cometidos por mujeres son esporádicos y significativamente menos frecuentes, con algunos eventos aislados desde 1980 hasta 2017. En contraste, los tiroteos cometidos por hombres son mucho más numerosos y muestran una tendencia creciente, especialmente a partir del año 2000, con un notable aumento alrededor de 2015.
+
+Vamos a centrarnos en el periodo de 2010 a 2017:
+
+```{r}
+
+# Definimos el rango de fechas desde 2010 hasta 2017
+fecha_inicio <- as.Date("2010-01-01")
+fecha_fin <- as.Date("2017-12-31")
+
+# Filtramos los datos para incluir solo tiroteos desde 2010 hasta 2017 y de los generos especificados
+datos_filtrados_genero_2010_2017 <- datos_limpios %>%
+  filter(Date >= fecha_inicio & Date <= fecha_fin
+         & (Gender %in% c("Male", "Female")))
+
+# Verificamos el número de filas en el nuevo conjunto de datos
+nrow(datos_filtrados_genero_2010_2017)
+```
+
+Creamos un histograma utilizando ggplot2 para la visualizacion por fechas:
+
+```{r}
+
+ggplot(datos_filtrados_genero_2010_2017, 
+       aes(x = Date, 
+           fill = Gender)) +
+  geom_histogram(position = "identity", 
+                 bins = 20, 
+                 show.legend = FALSE) +
+  facet_wrap(~Gender, ncol = 1) +
+  
+  # Agregamos etiquetas al gráfico
+  labs(title = "Histograma de Tiroteos por Género (2010-2017)",
+       x = "Fecha del Titoteo",
+       y = "Frecuencia")
+```
+
+Ahora, hacemos una representacion sin histograma:
+
+```{r}
+
+datos_filtrados_genero_2010_2017 %>%
+  group_by(Gender, Date) %>%
+  add_count() %>%
+  ggplot(aes(x = Date, 
+             color = Gender, y=n)) +
+  geom_line() +
+  facet_wrap(~ Gender, ncol = 1)
+```
+
+El gráfico vuelve a indicar que los tiroteos cometidos por hombres son más comunes y muestran un aumento significativo en 2016, posiblemente relacionado con tiroteos como el del Club Pulse, en Orlando, Florida, el 12 de junio de 2016, que ya ha sido mencionado varias veces durante el trabajo ya que hubo un gran número de víctimas. En contraste, los tiroteos cometidos por mujeres son extremadamente raros en el período analizado, y además solo hay hasta 2014.
+
+```{r}
+
+# Definimos un patrón regex para remover entidades HTML
+remove_reg <- "&[^\\s]*;"
+
+# Hacemos un proceso de limpieza con el dataframe 'datos_filtrados_genero'
+tidy_datos_genero <- datos_filtrados_genero %>% 
+  mutate(text = str_remove_all(Summary, remove_reg)) %>%  # Removemos entidades HTML definidas en 'remove_reg' de la columna 'Summary'
+  mutate(text = str_remove_all(text, "^[@#]\\w+"))  # Removemos caracteres especiales
+
+# Mostramos el número de filas del dataframe después de la limpieza
+nrow(tidy_datos_genero)
+
+# Convertimos el texto de los resúmenes en palabras individuales y removemos stopwords
+tidy_datos_filtrados_genero <- tidy_datos_genero %>%
+  unnest_tokens(word, text) %>%  # Descomponemos el texto en palabras individuales
+  filter(
+    !word %in% stop_words$word,  # Excluimos palabras que son stopwords
+    !word %in% str_remove_all(stop_words$word, "'"),  # Excluimos stopwords después de remover apóstrofes
+    str_detect(word, "[a-z]")  # Conservamos solo palabras que contengan letras minúsculas
+  )
+
+# Verificar las primeras filas de los tokens
+head(tidy_datos_filtrados_genero)
+
+# Calculamos la frecuencia de palabras por género y ajustamos por el total de palabras
+frequency_genero <- tidy_datos_filtrados_genero %>% 
+  count(Gender, word, sort = TRUE) %>%  # Contamos y ordenamos las palabras por frecuencia dentro de cada genero
+  left_join(
+    tidy_datos_filtrados_genero %>% 
+      count(Gender, name = "total")  # Calculamos el total de palabras por genero
+  ) %>%
+  mutate(freq = n / total)  # Calculamos la frecuencia relativa de cada palabra (número de veces que aparece / total de palabras en el genero)
+
+# Mostramos los resultados obtenidos
+View(frequency_genero)
+```
+
+Comparación de tokens Male versus Female:
+
+```{r}
+
+# Filtrar 'frequency_genero' para incluir solo las categorías 'Male' y 'Female'
+frequency_para_plot <- frequency_genero[frequency_genero$Gender 
+                                        %in% c("Male", "Female"),] 
+
+# Reorganizar el dataframe para comparar las frecuencias de palabras entre géneros
+frequency_para_plot <- frequency_para_plot %>% 
+  select(Gender, word, freq) %>%  # Seleccionamos solo las columnas necesarias
+  pivot_wider(names_from = Gender,  # Convertimos de formato largo a ancho
+              values_from = freq) %>%
+  arrange(Male, Female)  # Ordenamos el dataframe por 'Male' y luego 'Female'
+
+# Calcular y mostrar el percentil 50 (mediana) de la frecuencia de 'Male' multiplicado por 10 millones
+quantile(frequency_para_plot$Male,
+         probs = c(0.5),
+         na.rm = TRUE) * 10000000
+
+# Crear un gráfico de dispersión con texto para cada punto
+ggplot(frequency_para_plot, 
+       aes(Male, Female)) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.25, height = 0.25) +  # Añadimos puntos con 'jitter'
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +  # Añadimos texto a cada punto
+  scale_x_log10(labels = percent_format(), limits = c(0.001, 0.1)) +  # Escalamos el eje X en logaritmo y ajustamos los límites
+  scale_y_log10(labels = percent_format(), limits = c(0.001, 0.1)) +  # Escalamos el eje Y en logaritmo y ajustamos los límites
+  geom_abline(intercept = 0, slope = 1, color = "red") +  # Añadimos una línea roja diagonal
+  labs(title = "Comparación de Frecuencia de Palabras entre Géneros",
+       x = "Frecuencia en Male",
+       y = "Frecuencia en Female")
+```
+
+El gráfico muestra una comparativa entre las frecuencias de términos utilizados por los géneros del tirador 'Male' y 'Female'. Palabras como "children" y "worker" son más comunes en resúmenes de tiroteos realizados por mujeres, lo que puede indicar que estos incidentes están más relacionados con temas personales. Sin embargo, palabras como "police", "killed" y "fire" son más frecuentes en resúmenes de tiroteos realizados por hombres, lo que nos indica que son tiroteos sin una causa específica ni más personal como en el caso de las mujeres. Algunas palabras, como "students" tienen un uso más equilibrado entre ambos géneros.
+
+```{r fig.width=10, fig.height=8}
+
+# Cálculo de log odds ratio para las palabras entre las dos categorías de género
+word_ratios_genero <- tidy_datos_filtrados_genero %>%
+  filter(Gender %in% c("Male", "Female")) %>%
+  count(word, Gender) %>%  # Contamos las apariciones de cada palabra por género
+  group_by(word) %>%
+  filter(n >= 1) %>%  # Filtramos palabras que aparecen al menos 1 vez
+  ungroup() %>%
+  pivot_wider(names_from = Gender,  # Convertimos de formato largo a ancho
+              values_from = n, 
+              values_fill = 0) %>%
+  mutate_if(is.numeric, list(~(. + 1) / (sum(.) + 1))) %>%  # Smoothing
+  mutate(logratio = log(Male / Female)) %>%  # Calculamos el log odds ratio
+  arrange(desc(logratio))  # Ordenamos por log odds ratio
+
+
+# Visualización del log odds ratio
+word_ratios_genero %>%
+  group_by(logratio < 0) %>%
+  slice_max(abs(logratio), n = 20) %>%  # Seleccionamos los 20 valores más altos de log odds ratio
+  ungroup() %>%
+  mutate(word = reorder(word, logratio)) %>%
+  ggplot(aes(word, logratio, fill = logratio < 0)) +
+  geom_col(show.legend = TRUE) +
+  coord_flip() +  # Invertimos los ejes para mejor visualización
+  ylab("log odds ratio (Male/Female)") +  # Etiqueta para el eje Y
+  scale_fill_discrete(name = "", labels = c("Male", "Female")) +  # Colores distintos para cada lado del género
+  labs(title = "Log Odds Ratio de Palabras entre Géneros")
+
+```
+
+El gráfico de log odds ratio muestra las palabras que son significativamente más frecuentes en descripciones de tiroteos cometidos por hombres (Male) en comparación con mujeres (Female) y viceversa. Las barras en color rojo representan palabras más asociadas con hombres, mientras que las barras en color azul representan palabras más asociadas con mujeres.
+
+Las palabras como "shot", "people", "wounded" y "student" son más frecuentes en los tiroteos cometidos por hombres. Por otro lado, las palabras como "woods", "tribe", "bathroom" y "psychological" son más frecuentes en los tiroteos cometidos por mujeres.
+
+Este análisis sugiere diferencias en los contextos de los incidentes entre géneros, con los hombres más asociados con términos directamente relacionados con el acto de disparar y las víctimas, mientras que las mujeres están más asociadas con términos que pueden indicar entornos o motivos.
+
+# Topic Model
+
+```{r}
+
+# Filtrar datos para aquellos con problemas de salud mental
+datos_mental_health <- datos_limpios %>% filter(Mental.Health.Issues == "Yes")
+
+# Creamos un corpus con el contenido de los resúmenes filtrados
+mental_health_corpus <- corpus(datos_mental_health$Summary)
+
+# Tokenizamos el corpus, es decir, dividimos el texto en palabras o símbolos individuales
+# Además, eliminamos números, puntuación, símbolos, espacios adicionales, menciones de Twitter y URLs
+# para limpiar los datos antes del análisis
+mental_health_tokens <- tokens(mental_health_corpus,
+                         remove_numbers = TRUE,
+                         remove_punct = TRUE,
+                         remove_symbols = TRUE,
+                         remove_separators = TRUE,
+                         remove_twitter = TRUE,
+                         remove_url = TRUE)
+
+# Definimos las stopwords en inglés
+english_stopwords <- stopwords("english")
+
+# Añadimos números y signos de puntuación a la lista de stopwords
+my_stopwords2 <- c(english_stopwords,
+                   as.character(c(0:9)),  # Números del 0 al 9
+                   "|", "&", "$")  # Signos de puntuación y símbolos monetarios
+
+# Añadimos palabras y símbolos específicos que no queremos incluir en el análisis
+stop_def <- c(my_stopwords2,
+              "two",
+              "three",
+              "four",
+              "shooting", 
+              "shooter", 
+              "victim", 
+              "killed", 
+              "injured", 
+              "people", 
+              "killing", 
+              "shot")
+
+# Eliminamos palabras no deseadas (stopwords y otras definidas) de los tokens
+mental_health_palabras <- tokens_select(mental_health_tokens,
+                                pattern = stop_def,
+                                selection = "remove")
+
+```
+
+Creamos la DFM y el modelo LDA:
+
+```{r}
+
+# Creamos una matriz de términos por documento (DFM) 
+dfm_mental_health <- dfm(mental_health_palabras)
+
+# Tomamos el tiempo antes de comenzar a ajustar el modelo de tópicos
+time1 <- Sys.time()
+
+# Preparamos la DFM para el modelado, eliminando términos poco frecuentes
+quant_dfm_1 <- dfm_trim(dfm_mental_health, min_termfreq = 10)
+
+# Establecemos una semilla para reproducibilidad y verificamos si el paquete 'topicmodels' está instalado
+set.seed(100)
+if (require(topicmodels)) {
+  # Ajustamos un modelo LDA con 10 tópicos a la DFM
+  lda_fit_1 <- LDA(convert(quant_dfm_1, to = "topicmodels"), 
+                 k = 10)
+  # Extraemos los 6 términos más representativos de cada tópico
+  get_terms(lda_fit_1, 6)
+}
+
+# Tomamos el tiempo después de ajustar el modelo de tópicos
+time2 <- Sys.time()
+
+# Imprimimos la duración del ajuste del modelo
+print(time2-time1)
+
+# Guardamos el modelo de tópicos para uso futuro
+save(lda_fit_1, file = "mental_health_topicmodel_1.rda")
+
+```
+
+```{r fig.width=10, fig.height=10}
+
+# 'lda_fit_1' es el objeto LDA y 'quant_dfm_1' es el DFM
+# Primero obtenemos la matriz de términos por tópico
+kk_1 <- lda_fit_1@beta
+
+# Los nombres de las palabras tiene que estar en las columnas
+colnames(kk_1) <- lda_fit_1@terms
+
+# Definimos el layout para múltiples gráficos
+par(mfrow=c(3, 2))
+
+# Iteramos a través de cada tópico
+for (k in 1:6) {  # Visualizamos 6 topicos
+  
+  # Extraemos las probabilidades para el tópico k
+  topic_probabilities_1 <- kk_1[k, ]
+  
+  # Convertimos a dataframe para manipulación
+  topic_df_1 <- data.frame(word = names(topic_probabilities_1), rank = rank(topic_probabilities_1))
+  
+  # Ordenamos las palabras por su probabilidad dentro del tópico
+  topic_df_1 <- topic_df_1[order(-topic_df_1$rank), ]
+  
+  # Ajustamos los valores para visualización
+  topic_df_1$freq <- topic_df_1$rank - max(topic_df_1$rank) + 100
+  
+  # Escogemos una paleta de colores
+  pal <- brewer.pal(8, "Dark2")
+  
+  # Generamos la nube de palabras para el tópico k
+  wordcloud(words = topic_df_1$word, freq = topic_df_1$freq, 
+            scale = c(1.5, 0.05),
+            max.words = 200, 
+            random.order = FALSE, 
+            rot.per = 0, 
+            colors = pal,
+            random.clor = TRUE)
+  
+  # Añadimos un título al gráfico
+  title(main = paste("Topic", k), col.main = "black", font = 10)
+}
+```
+
+#### Topic 1
+
+-   **Palabras clave**: children, student, campus, california, entered, home, former, wounded, officer, committing, suicide.
+
+-   **Interpretación**: Este tópico se centra en incidentes que ocurren en entornos educativos, como campus y escuelas. También menciona a niños y estudiantes, así como a términos relacionados con la policía y suicidios, sugiriendo que estos incidentes afectan a menores y ocurren en instituciones educativas, posiblemente involucrando respuestas policiales y situaciones de suicidio.
+
+#### Topic 2
+
+-   **Palabras clave**: campus, teacher, students, entered, wounded, school, committing, suicide, california, police, officer.
+
+-   **Interpretación**: Similar al Tópico 1, este tema también se enfoca en entornos educativos, destacando la participación de maestros y estudiantes. Las palabras "wounded" y "committing suicide" indican que estos incidentes resultan en heridos y suicidios.
+
+#### Topic 3
+
+-   **Palabras clave**: wounding, scene, teacher, police, former, committing, suicide, campus, children, office, gun.
+
+-   **Interpretación**: Este tópico resalta incidentes que involucran heridas, situaciones en oficinas y escenarios de suicidio, sugiriendo que los incidentes pueden ocurrir en lugares de trabajo o involucrar a individuos que enfrentan problemas de salud mental.
+
+#### Topic 4
+
+-   **Palabras clave**: home, wounded, school, students, police, teacher, committing, suicide, high, campus.
+
+-   **Interpretación**: Este tema incluye referencias tanto a entornos educativos como al hogar, indicando que los tiroteos pueden ocurrir en ambos lugares. La mención de "police" y "wounded" sugiere la intervención de las fuerzas del orden y la presencia de heridos.
+
+#### Topic 5
+
+-   **Palabras clave**: suicide, former, students, office, committing, home, scene, california, teacher.
+
+-   **Interpretación**: Este tópico también menciona lugares de trabajo y escenarios domésticos, con un enfoque en incidentes que resultan en suicidios. La repetición de términos como "students" y "teacher" sugiere la implicación de entornos educativos.
+
+#### Topic 6
+
+-   **Palabras clave**: wounded, officer, home, school, committing, suicide, students, high, campus, teacher.
+
+-   **Interpretación**: Este tema combina elementos de entornos educativos y domésticos, con un énfasis en heridos y suicidios. La mención de "officer" indica la intervención policial en estos incidentes.
+
+Con el análisis de los tópicos, podemos ver que los tiroteos relacionados con problemas de salud mental ocurren en una variedad de escenarios, principalmente en entornos educativos, domésticos y laborales.
+
+La frecuencia de términos como "school", "students", "teacher", "campus" y "high school" indica que las instituciones educativas son un escenario común para los tiroteos relacionados con problemas de salud mental, resaltando la gran tasa de suicidios de persona jóvenes. También encontramos varias veces la palabra "former", que nos indica que estos problemas de salud mental pudieron estar causados por despidos.
+
+# Sentiment Analysis
+
+## Sentiment Analysis General
+
+Vamos a hacer un primer sentiment analysis general, sin centrarnos en ningún estado ni causa.
+
+Usamos el léxico bing para el análisis de sentimientos. El léxico Bing es un conjunto de palabras clasificadas según su polaridad de sentimiento.
+
+```{r}
+
+# Extraemos solo el contenido de texto de los resúmenes para análisis de sentimiento
+text_summary <- datos_limpios %>%
+  select(Summary)
+
+# Transformamos el texto de los resúmenes en un formato 'tidy', dividiéndolo en palabras individuales
+tidy_text_summary <- text_summary %>%
+  unnest_tokens(word, Summary)
+
+# Unimos nuestro conjunto de datos de texto con un léxico de sentimientos (usamos el léxico 'bing') y contamos la ocurrencia de sentimientos
+sentiment_analysis_summary <- tidy_text_summary %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(sentiment, sort = TRUE)
+
+# Graficamos los resultados del análisis de sentimientos para visualizar el balance entre sentimientos positivos y negativos
+sentiment_analysis_summary %>%
+  ggplot(aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Análisis de Sentimientos de los Resúmenes de Tiroteos")
+
+# Imprimimos en consola el balance de sentimientos
+print(sentiment_analysis_summary)
+
+```
+
+Como era de esperar, el sentimiento general de estos textos es negativo, ya que se trata de tiroteos.
+
+Ahora usamos el paquete SentimentAnalysis:
+
+```{r}
+
+# Seleccionamos una muestra aleatoria de 1000 resúmenes para un análisis más detallado
+set.seed(123) # Para reproducibilidad
+example_summary <- sample(datos_limpios$Summary, 100)
+
+# Creamos histogramas para visualizar la distribución de los sentimientos utilizando diferentes diccionarios de análisis de sentimiento.
+
+sentiment_summary <- analyzeSentiment(example_summary)
+
+# Realizamos un análisis de sentimiento con el diccionario QDAP y resumimos los resultados
+sentiment_summary_qdap <- summary(sentiment_summary$SentimentQDAP, na.rm = TRUE)
+hist(sentiment_summary$SentimentQDAP, breaks = 50, main = "Distribución del Sentimiento QDAP", xlab = "Sentimiento")
+
+# Diccionario Harvard IV-4 (HE)
+sentiment_summary_he <- summary(sentiment_summary$SentimentHE)
+hist(sentiment_summary$SentimentHE, breaks = 50, main = "Distribución del Sentimiento Harvard IV-4", xlab = "Sentimiento")
+
+# Diccionario General Inquirer (GI)
+sentiment_summary_gi <- summary(sentiment_summary$SentimentGI)
+hist(sentiment_summary$SentimentGI, breaks = 50, main = "Distribución del Sentimiento General Inquirer", xlab = "Sentimiento")
+
+```
+
+Otra vez, podemos observar que predominan los sentimiento negativos. Por ejemplo, tenemos un gran pico justo a la izquierda del 0.0 con los tres diccionarios, y los diccionarios QDAP y GI presentan muchas barras a lo largo de los valores negativos.
+
+Ahora usamos AFINN, un léxico de análisis de sentimientos AFINN es popular para el análisis de sentimientos en textos cortos:
+
+```{r}
+
+# Creamos un conjunto de datos 'tidy' dividiendo los textos en palabras individuales
+datos_tidy_summary <- datos_limpios %>% 
+  unnest_tokens(word, Summary)
+
+# Realizamos un análisis de sentimiento utilizando el diccionario 'afinn'
+datos_sentiment_summary <- datos_tidy_summary %>% 
+  inner_join(get_sentiments("afinn"), by = "word") %>%
+  inner_join(datos_limpios %>% select(S., Summary), by = "S.") %>%
+  group_by(S.) %>% 
+  summarise(sentiment = sum(value), text = first(Summary))
+
+# Ordenamos los resultados del análisis de sentimientos
+datos_sentiment_summary_sorted <- datos_sentiment_summary %>% 
+  arrange(desc(sentiment))
+
+# Graficamos la distribución del sentimiento en los resumenes
+ggplot(data = datos_sentiment_summary_sorted, aes(x = sentiment)) + 
+  geom_histogram(bins = 50, color = 'firebrick', fill = 'darkred') + 
+  scale_x_continuous(breaks = seq(min(datos_sentiment_summary_sorted$sentiment), max(datos_sentiment_summary_sorted$sentiment), by = 5)) +
+  xlab("Sentimiento") + 
+  ylab("Cantidad de Resúmenes") + 
+  ggtitle("Distribución de Sentimiento en Resúmenes de Tiroteos")
+
+```
+
+La mayoría de los resúmenes tienen un tono negativo, con picos significativos alrededor de los valores de -5, -6 y -8, lo que indica una alta frecuencia de términos negativos. Los sentimientos negativos alcanzan un valor mínimo de aproximadamente -21, sugiriendo que algunos resúmenes contienen una fuerte carga de términos negativos.
+
+Voy a analizar los resúmenes de los tiroteos correspondientes a los sentimientos -20 y -21, que son con diferencias los más negativos:
+
+```{r}
+
+# Resumen del tiroteo con sentimiento -21
+resumen_negative21 <- datos_sentiment_summary_sorted %>%
+  filter(sentiment == -21)
+
+print(resumen_negative21)
+
+```
+
+Ocurrió el 10 de marzo de 2009, en el condado de Geneva, Alabama. Un trabajador de 28 años mató a su madre, incendió su casa, y luego asesinó a su tío, primos, vecinos, y abuela. Continuó matando a tres transeúntes y disparó a cualquiera que intentara escapar o detenerlo. En total, diez personas fueron asesinadas y seis resultaron heridas antes de que el perpetrador se suicidara cuando la policía intentó detenerlo. Este resumen es extremadamente negativo debido a la brutalidad y el número de víctimas, incluyendo a miembros de su propia familia y personas inocentes.
+
+```{r}
+
+# Resumen del tiroteo con sentimiento -20
+resumen_negative20 <- datos_sentiment_summary_sorted %>%
+  filter(sentiment == -20)
+
+print(resumen_negative20)
+
+```
+
+Kori Ali Muhammad, de 39 años, disparó al azar y mató a tres personas en una calle de Fresno, California, en un presunto crimen de odio. Muhammad, quien es afroamericano, mató a tres víctimas blancas y describió su ataque como motivado racialmente. También gritó "allahu akbar" al ser arrestado, aunque no se encontraron vínculos con el terrorismo islamista. Este resumen es extremadamente negativo debido a la motivación racial del crimen y el asesinato aleatorio de personas inocentes.
+
+También me ha parecido interesante estudiar el resumen que aparece en el gráfico con un sentimiento positivo de 3, porque me parece imposible que haya algún resumen de un tiroteo que sea positivo o que tenga algo de contenido positivo:
+
+```{r}
+
+# Resumen del tiroteo con sentimiento 3
+resumen_positive3 <- datos_sentiment_summary_sorted %>%
+  filter(sentiment == 3)
+
+print(resumen_positive3)
+
+```
+
+El texto describe un incidente trágico y violento que ocurrió el 14 de agosto de 2013, donde un hombre de 40 años, obsesionado con la actriz Selena Gomez, disparó fatalmente a su madre, hermana, sobrina y sobrino recién nacido. Posteriormente fue arrestado y declaró a la policía que necesitaba alejarse de su familia porque ellos le impedían estar con su "verdadero amor".
+
+La razón del sentimiento positivo de este resumen puede deberse a que palabras como "amor verdadero" o "Selena Gómez" podrían ser interpretadas positivamente en un análisis superficial, sin considerar que en este contexto específico refieren a una obsesión patológica.
+
+Probamos a usar quanteda para el análisis de sentimiento:
+
+```{r}
+
+# Verificamos el tamaño del dataset
+print(paste("Número de resúmenes disponibles:", nrow(datos_limpios)))
+
+# Ajustamos el tamaño de la muestra según el tamaño del dataset
+# Tomamos el mínimo entre 1000 y el tamaño del dataset
+tamaño_muestra <- min(1000, nrow(datos_limpios))  
+
+# Seleccionamos una muestra aleatoria de resúmenes
+set.seed(123) # Para reproducibilidad
+example_summary <- sample(datos_limpios$Summary, tamaño_muestra)
+
+# Creamos un corpus a partir de los resúmenes y añadimos la fecha de publicación como metadato
+summary_corpus <- corpus(datos_limpios$Summary)
+docvars(summary_corpus, "Fecha") <- datos_limpios$Date
+
+# Tokenizamos el corpus
+tokens_summary <- tokens(summary_corpus)
+
+# Aplicamos un diccionario para identificar términos relacionados con sentimientos
+tokens_summary_sentiment <- tokens_lookup(tokens_summary, dictionary = data_dictionary_LSD2015[1:2])
+
+# Agrupamos los términos por día y creaMOS una matriz de términos por fecha
+dfmat_summary_sentiment <- dfm(tokens_summary_sentiment) %>% 
+  dfm_group(groups = docvars(summary_corpus, "Fecha"))
+
+# Representamos visualmente la frecuencia de términos positivos y negativos a lo largo del tiempo
+matplot(dfmat_summary_sentiment$Fecha, 
+        dfmat_summary_sentiment, 
+        type = "l", 
+        lty = 1, 
+        col = 1:2,
+        ylab = "Frequency", 
+        xlab = "")
+grid()
+legend("topleft", 
+       col = 1:2, 
+       legend = colnames(dfmat_summary_sentiment), 
+       lty = 1, 
+       bg = "white")
+
+```
+
+Podemos observar que hay un pico elevado entre 1990 y 1995, y luego una gran cantidad de sentimientos negativos a partir de 2010.
+
+Vamos a analizar los textos en estos dos periodos de tiempo.
+
+### Sentiment Analysis 1990-1995
+
+```{r}
+
+# Filtramos los tokens para obtener aquellos entre 1990 y 1995
+tokens_summary_1990_1995 <- tokens_subset(tokens_summary, 
+                                (Fecha >= as.Date("1990-01-01") &
+                                 Fecha <= as.Date("1995-12-31")))
+
+# Aplicamos un diccionario para identificar términos relacionados con sentimientos
+tokens_summary_sentiment_1990_1995 <- tokens_lookup(tokens_summary_1990_1995, 
+                              dictionary = data_dictionary_LSD2015[1:2])
+
+# Agrupamos los términos por día y creamos una matriz de términos por fecha
+dfmat_summary_sentiment_1990_1995 <- dfm(tokens_summary_sentiment_1990_1995) %>% 
+  dfm_group(groups = Fecha)
+
+# Representamos visualmente la frecuencia de términos positivos y negativos a lo largo del tiempo
+matplot(dfmat_summary_sentiment_1990_1995$Fecha, 
+        dfmat_summary_sentiment_1990_1995, 
+        type = "l", 
+        lty = 1, 
+        col = 1:2,
+        ylab = "Frequency", 
+        xlab = "")
+grid()
+legend("topleft", 
+       col = 1:2, 
+       legend = colnames(dfmat_summary_sentiment_1990_1995), 
+       lty = 1, 
+       bg = "white")
+```
+
+El mayor pico de sentimiento negativo en este periodo ocurre en 1993.
+
+Investigando estas fechas he encontrado varios sucesos que ocurrieron, aunque puede que el pico en la gráfica no tenga que ver con estos:
+
+1.  **Tiroteo en la sede de la CIA**: El 25 de enero de 1993, Mir Aimal Kansi, un nacional paquistaní, disparó y mató a dos empleados de la CIA e hirió a otros tres en Langley, Virginia. Este ataque fue motivado por la ira de Kansi hacia las políticas de Estados Unidos en el Medio Oriente y su intervención en los países musulmanes. Después del ataque, Kansi huyó y fue capturado en 1997, posteriormente fue extraditado a los EE.UU., juzgado, y ejecutado en 2002.
+
+2.  **Masacre de 101 California Street**: El 1 de julio de 1993, Gian Luigi Ferri abrió fuego en un edificio de oficinas en San Francisco, California, matando a ocho personas e hiriendo a seis más antes de suicidarse. Este tiroteo fue uno de los más mortales en la historia de la ciudad y generó un debate significativo sobre el control de armas.
+
+3.  **Masacre de Brown's Chicken**: El 8 de enero de 1993, en Palatine, Illinois, siete empleados de un restaurante de Brown's Chicken fueron asesinados durante un robo. Este caso permaneció sin resolver durante casi una década hasta que dos hombres fueron arrestados y condenados.
+
+4.  **Tiroteo en el Long Island Rail Road**: El 7 de diciembre de 1993, Colin Ferguson disparó a pasajeros en un tren de Long Island Rail Road, matando a seis personas e hiriendo a diecinueve. Este ataque fue un punto crucial en las discusiones sobre seguridad y armas en el transporte público.
+
+Vamos a analizar este año en concreto:
+
+```{r}
+
+# Filtramos datos para el año 1993
+datos_1993 <- datos_limpios %>%
+  filter(Date >= as.Date("1993-01-01") & Date <= as.Date("1993-12-31"))
+
+# Verificamos el tamaño del dataset filtrado
+print(paste("Número de resúmenes disponibles en 1993:", nrow(datos_1993)))
+
+# Extraemos columnas relevantes
+datos_1993_relevantes <- datos_1993 %>%
+  select(Summary, Location, State, Total.victims, Fatalities, Injured)
+
+# Mostramos un resumen de los datos extraídos
+summary(datos_1993_relevantes)
+
+```
+
+```{r}
+
+# Visualizamos el número de víctimas, fatalidades y heridos por ciudad y estado
+ggplot(datos_1993_relevantes, aes(x = Location, y = Total.victims, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Víctimas por Ciudad y Estado en 1993",
+       x = "Ciudad",
+       y = "Número de Víctimas")
+
+ggplot(datos_1993_relevantes, aes(x = Location, y = Fatalities, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Fatalidades por Ciudad y Estado en 1993",
+       x = "Ciudad",
+       y = "Número de Fatalidades")
+
+ggplot(datos_1993_relevantes, aes(x = Location, y = Injured, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Heridos por Ciudad y Estado en 1993",
+       x = "Ciudad",
+       y = "Número de Heridos")
+```
+
+Podemos ver que tanto en número de heridos como en número de víctimas, el más alto es en Nueva York.
+
+```{r}
+
+# Filtramos datos para el año 1993 y el estado de Nueva York
+datos_new_york_1993 <- datos_1993_relevantes %>%
+  filter(State == "New York")
+
+print(datos_new_york_1993)
+```
+
+Podemos ver que el suceso es el último de los cuatro que hemos comentado arriba como posibilidades del pico de sentimiento negativo en este periodo de tiempo.
+
+### Sentiment Analysis 2010-2017
+
+```{r}
+
+# Filtramos los tokens para obtener aquellos entre 2010 y 2017
+tokens_summary_2010_2017 <- tokens_subset(tokens_summary, 
+                                (Fecha >= as.Date("2010-01-01") &
+                                 Fecha <= as.Date("2017-12-31")))
+
+# Aplicamos un diccionario para identificar términos relacionados con sentimientos
+tokens_summary_sentiment_2010_2017 <- tokens_lookup(tokens_summary_2010_2017, 
+                              dictionary = data_dictionary_LSD2015[1:2])
+
+# Agrupamos los términos por día y creamos una matriz de términos por fecha
+dfmat_summary_sentiment_2010_2017 <- dfm(tokens_summary_sentiment_2010_2017) %>% 
+  dfm_group(groups = Fecha)
+
+# Representamos visualmente la frecuencia de términos positivos y negativos a lo largo del tiempo
+matplot(dfmat_summary_sentiment_2010_2017$Fecha, 
+        dfmat_summary_sentiment_2010_2017, 
+        type = "l", 
+        lty = 1, 
+        col = 1:2,
+        ylab = "Frequency", 
+        xlab = "")
+grid()
+legend("topleft", 
+       col = 1:2, 
+       legend = colnames(dfmat_summary_sentiment_2010_2017), 
+       lty = 1, 
+       bg = "white")
+```
+
+El mayor pico de sentimiento negativo en este periodo ocurre en 2016.
+
+Investigando estas fechas he encontrado varios sucesos que ocurrieron, aunque puede que el pico en la gráfica no tenga que ver con estos:
+
+1.  **Tiroteo en el Club Nocturno Pulse en Orlando:** El 12 de junio de 2016, Omar Mateen, un ciudadano estadounidense de 29 años, perpetró un tiroteo masivo en el club nocturno Pulse en Orlando, Florida. Mateen mató a 49 personas e hirió a más de 50 antes de ser abatido por la policía. Este ataque fue el más mortífero en la historia de Estados Unidos hasta ese momento. Mateen, que había sido investigado previamente por el FBI por posibles vínculos con el terrorismo, realizó el ataque alegando lealtad al Estado Islámico.
+
+2.  **Tiroteo en el Centro Comercial Cascade:** El 23 de septiembre de 2016, Arcan Cetin, un hombre de 20 años, llevó a cabo un tiroteo en el Cascade Mall en Burlington, Washington. Cetin mató a cinco personas antes de ser arrestado al día siguiente. Este incidente atrajo la atención nacional debido a la brutalidad del ataque y el posterior arresto del perpetrador, quien luego se suicidó en la cárcel mientras esperaba juicio.
+
+Vamos a analizar este año en concreto:
+
+```{r}
+
+# Filtramos datos para el año 2016
+datos_2016 <- datos_limpios %>%
+  filter(Date >= as.Date("2016-01-01") & Date <= as.Date("2016-12-31"))
+
+# Verificamos el tamaño del dataset filtrado
+print(paste("Número de resúmenes disponibles en 2016:", nrow(datos_2016)))
+
+# Extraemos columnas relevantes
+datos_2016_relevantes <- datos_2016 %>%
+  select(Summary, Location, State, City, Total.victims, Fatalities, Injured)
+
+# Mostramos un resumen de los datos extraídos
+summary(datos_2016_relevantes)
+
+```
+
+```{r fig.height=8}
+
+# Visualizamos el número de víctimas, fatalidades y heridos por ciudad y estado
+ggplot(datos_2016_relevantes, aes(x = Location, y = Total.victims, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Víctimas por Ciudad y Estado en 2016",
+       x = "Ciudad",
+       y = "Número de Víctimas")
+
+ggplot(datos_2016_relevantes, aes(x = Location, y = Fatalities, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Fatalidades por Ciudad y Estado en 2016",
+       x = "Ciudad",
+       y = "Número de Fatalidades")
+
+ggplot(datos_2016_relevantes, aes(x = Location, y = Injured, fill = State)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de Heridos por Ciudad y Estado en 2016",
+       x = "Ciudad",
+       y = "Número de Heridos")
+```
+
+Podemos ver que tanto en número de heridos como en número de víctimas como en número de fatalidades, el más alto es en Florida, en concreto en Orlando.
+
+```{r}
+
+# Filtramos datos para el año 2016, el estado de Florida y la ciudad de Orlando
+datos_florida_orlando_2016 <- datos_2016_relevantes %>%
+  filter(State == "Florida" & City == "Orlando")
+
+print(datos_florida_orlando_2016)
+```
+
+Podemos ver que el suceso es el primero que hemos comentado arriba como posibilidades del pico de sentimiento negativo en este periodo de tiempo.
+
+## Sentiment Analysis State
+
+Vamos a hacer un segundo sentiment analysis por estado, usando para ello la columna State.
+
+Usamos el léxico bing para el análisis de sentimientos. El léxico Bing es un conjunto de palabras clasificadas según su polaridad de sentimiento.
+
+```{r}
+
+# Extraemos el contenido de texto de los resúmenes junto con los estados para el análisis de sentimiento
+text_summary_state <- datos_limpios %>%
+  select(State, Summary)
+
+# Transformamos el texto de los resúmenes en un formato 'tidy', dividiéndolo en palabras individuales
+tidy_text_summary_state <- text_summary_state %>%
+  unnest_tokens(word, Summary)
+
+# Unimos nuestro conjunto de datos de texto con un léxico de sentimientos (usamos el léxico 'bing') y contamos la ocurrencia de sentimientos
+sentiment_analysis_summary_state  <- tidy_text_summary_state %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(sentiment, sort = TRUE)
+
+# Graficamos los resultados del análisis de sentimientos para visualizar el balance entre sentimientos positivos y negativos
+sentiment_analysis_summary_state %>%
+  ggplot(aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Análisis de Sentimientos de los Resúmenes de Tiroteos por Estado")
+
+# Imprimimos en consola el balance de sentimientos
+print(sentiment_analysis_summary_state)
+
+```
+
+Como era de esperar, el sentimiento general de estos textos también es negativo, ya que se trata de tiroteos por estado.
+
+Vamos a ver un estudio por estado:
+
+```{r fig.height=12}
+
+# Unimos nuestro conjunto de datos de texto con un léxico de sentimientos (usamos el léxico 'bing') y contamos la ocurrencia de sentimientos por estado
+sentiment_analysis_summary_state <- tidy_text_summary_state %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  group_by(State, sentiment) %>%
+  count() %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment_score = positive - negative)
+
+# Filtramos los estados 'NA'
+sentiment_analysis_summary_state <- sentiment_analysis_summary_state %>%
+  filter(!is.na(State))
+
+# Graficamos los resultados del análisis de sentimientos para visualizar el balance entre sentimientos positivos y negativos por estado
+ggplot(sentiment_analysis_summary_state, aes(x = reorder(State, sentiment_score), y = sentiment_score, fill = sentiment_score > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Análisis de Sentimientos de los Resúmenes de Tiroteos por Estado", x = "Estado", y = "Puntuación de Sentimiento") +
+  scale_fill_manual(values = c("red", "blue"), guide = FALSE)
+
+# Imprimimos en consola el balance de sentimientos por estado
+print(sentiment_analysis_summary_state)
+
+```
+
+El análisis de sentimientos de los resúmenes de tiroteos por estado muestra una predominancia de sentimientos negativos en todos los estados. California y Washington destacan con puntuaciones de sentimiento particularmente bajas, lo que sugiere que los resúmenes de tiroteos en estos estados contienen una gran cantidad de términos con connotaciones negativas. En contraste, algunos estados como Maryland (MD), Iowa, y Arkansas muestran puntuaciones de sentimiento ligeramente menos negativas, aunque todavía predomina la negatividad. Estos resultados resaltan la carga emocional y la naturaleza trágica de los tiroteos, que inevitablemente llevan a resúmenes con sentimientos predominantemente negativos.
+
+Ahora usamos el paquete SentimentAnalysis:
+
+```{r fig.height=10}
+
+# Seleccionamos una muestra aleatoria de 1000 resúmenes para un análisis más detallado
+set.seed(123) # Para reproducibilidad
+example_data <- sample_n(datos_limpios, 100) # Selecciona una muestra de 100 registros incluyendo los estados
+
+# Realizamos el análisis de sentimiento con el paquete SentimentAnalysis
+sentiment_summary <- analyzeSentiment(example_data$Summary)
+
+# Agregamos los resultados de sentimiento al dataframe original
+example_data$SentimentQDAP <- sentiment_summary$SentimentQDAP
+example_data$SentimentHE <- sentiment_summary$SentimentHE
+example_data$SentimentGI <- sentiment_summary$SentimentGI
+
+# Creamos histogramas para visualizar la distribución de los sentimientos utilizando diferentes diccionarios de análisis de sentimiento.
+
+# Resumimos los resultados por estado para cada diccionario
+sentiment_summary_qdap <- example_data %>%
+  group_by(State) %>%
+  summarise(mean_sentiment_qdap = mean(SentimentQDAP, na.rm = TRUE))
+
+sentiment_summary_he <- example_data %>%
+  group_by(State) %>%
+  summarise(mean_sentiment_he = mean(SentimentHE, na.rm = TRUE))
+
+sentiment_summary_gi <- example_data %>%
+  group_by(State) %>%
+  summarise(mean_sentiment_gi = mean(SentimentGI, na.rm = TRUE))
+
+# Visualizamos los resultados para cada diccionario
+
+# QDAP
+ggplot(sentiment_summary_qdap, aes(x = reorder(State, mean_sentiment_qdap), y = mean_sentiment_qdap, fill = mean_sentiment_qdap > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Distribución del Sentimiento QDAP por Estado", x = "Estado", y = "Puntuación Media de Sentimiento QDAP") +
+  scale_fill_manual(values = c("red", "blue"), guide = FALSE)
+
+# Harvard IV-4 (HE)
+ggplot(sentiment_summary_he, aes(x = reorder(State, mean_sentiment_he), y = mean_sentiment_he, fill = mean_sentiment_he > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Distribución del Sentimiento Harvard IV-4 por Estado", x = "Estado", y = "Puntuación Media de Sentimiento Harvard IV-4") +
+  scale_fill_manual(values = c("red", "blue"), guide = FALSE)
+
+# General Inquirer (GI)
+ggplot(sentiment_summary_gi, aes(x = reorder(State, mean_sentiment_gi), y = mean_sentiment_gi, fill = mean_sentiment_gi > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Distribución del Sentimiento General Inquirer por Estado", x = "Estado", y = "Puntuación Media de Sentimiento General Inquirer") +
+  scale_fill_manual(values = c("red", "blue"), guide = FALSE)
+
+```
+
+**Sentimiento QDAP**
+
+En la primera gráfica de distribución del sentimiento QDAP por estado, observamos que la mayoría de los estados tienen puntuaciones medias de sentimiento negativas. California y Kentucky destacan con las puntuaciones más negativas, mientras que algunos estados como Massachusetts y Nebraska muestran puntuaciones ligeramente positivas. Esto sugiere que, en general, los resúmenes de los tiroteos tienen un tono negativo, con algunas variaciones según el estado.
+
+**Sentimiento Harvard IV-4**
+
+La segunda gráfica muestra la distribución del sentimiento según el diccionario Harvard IV-4. Aquí, vemos que Kansas, Mississippi y Nevada tienen puntuaciones medias de sentimiento positivas, lo que es inusual dado el contexto de los resúmenes. Georgia, por otro lado, presenta una puntuación ligeramente negativa. La mayoría de los estados se agrupan cerca del cero, indicando una neutralidad relativa en los sentimientos según este diccionario.
+
+**Sentimiento General Inquirer**
+
+En la tercera gráfica, que utiliza el diccionario General Inquirer, todos los estados excepto Oklahoma muestran puntuaciones medias de sentimiento negativas. Indiana y California destacan con las puntuaciones más negativas.
+
+Ahora usamos AFINN, un léxico de análisis de sentimientos AFINN es popular para el análisis de sentimientos en textos cortos:
+
+```{r}
+
+# Asegurarnos de que el campo Summary está disponible
+text_summary_state <- datos_limpios %>%
+  select(State, Summary)
+
+# Transformamos el texto de los resúmenes en un formato 'tidy', dividiéndolo en palabras individuales
+tidy_text_summary_state <- text_summary_state %>%
+  unnest_tokens(word, Summary)
+
+# Realizamos un análisis de sentimiento utilizando el diccionario 'afinn'
+sentiment_state <- tidy_text_summary_state %>% 
+  inner_join(get_sentiments("afinn"), by = "word") %>%
+  group_by(State) %>%    # Agrupamos por estado 
+  summarise(sentiment = sum(value)) %>%
+  ungroup()
+
+# Ordenamos los resultados del análisis de sentimientos
+datos_sentiment_state_sorted <- sentiment_state %>% 
+  arrange(desc(sentiment))
+
+# Mostrar un resumen de los datos agrupados
+print(summary(datos_sentiment_state_sorted))
+
+# Graficamos la distribución del sentimiento en los resúmenes por estado
+ggplot(data = datos_sentiment_state_sorted, aes(x = sentiment)) + 
+  geom_histogram(bins = 50, color = 'firebrick', fill = 'darkred') + 
+  scale_x_continuous(breaks = seq(min(datos_sentiment_state_sorted$sentiment), max(datos_sentiment_state_sorted$sentiment), by = 15)) +
+  xlab("Sentimiento") + 
+  ylab("Cantidad de Resúmenes") + 
+  ggtitle("Distribución de Sentimiento en Resúmenes de Tiroteos por Estado")
+
+```
+
+La mayoría de los resúmenes tienen un tono negativo, con picos con valores negativos muy altos. Los sentimientos negativos alcanzan un valor mínimo de aproximadamente -239, sugiriendo que algunos resúmenes contienen una muy fuerte carga de términos negativos.
+
+Voy a analizar los resúmenes de los tiroteos correspondientes a los sentimientos -239 y -213, que son con diferencias los más negativos:
+
+```{r}
+
+# Informacion de los tiroteo con sentimiento -239
+tiroteos_negative239 <- datos_sentiment_state_sorted %>%
+  filter(sentiment == -239)
+
+print(tiroteos_negative239)
+
+```
+
+Los tiroteos de California tienen un sentimiento negativo muy alto, lo cual concuerda con la información que hemos ido obteniendo a lo largo del trabajo, como ha sido en el apartado donde hemos estudiado los tiroteos en 2015 y obtuvimos que en ese año hubo incidentes particularmente graves en California, que presentaba el círculo más grande en el mapa interactivo.
+
+```{r}
+
+# Informacion de los tiroteos con sentimiento -213
+tiroteos_negative213 <- datos_sentiment_state_sorted %>%
+  filter(sentiment == -213)
+
+print(tiroteos_negative213)
+```
+
+Los tiroteos con estado no especificado tienen un sentimiento negativo muy alto. Más tarde, gracias a Deep LLMs, trataremos de obtener la localización de algunos tiroteos, que aparece en los resúmenes pero no en la columna de Location.
+
+# SNA para Análisis de Targets
+
+He decidido realizar un Social Network Analysis para analizar datos textuales de tiroteos, específicamente analizando el campo **"Target"** para identificar y visualizar las relaciones entre diferentes tiroteos basadas en sus objetivos (targets) compartidos.
+
+## Creación del Grafo
+
+Preparación de Datos y Creación del Corpus:
+
+```{r}
+
+# Convertimos las columnas 'Target' y 'Title' del dataframe a tipo string para procesamiento de texto
+datos_limpios$Target <- as.character(datos_limpios$Target)
+datos_limpios$Title <- as.character(datos_limpios$Title)
+
+# Creamos un corpus de texto a partir de la columna 'Target' y asociamos cada texto con su título correspondiente del tiroteo
+shootings_target_corpus <- corpus(datos_limpios$Target, 
+                           docvars = data.frame(Title = datos_limpios$Title,
+                                        Target = datos_limpios$Target))
+```
+
+Procesamiento de Texto - Tokenización y Filtrado:
+
+```{r}
+
+# Generamos tokens de cada texto en el corpus 
+tokens_shootings_target <- tokens(shootings_target_corpus, what = "word")
+
+# Eliminamos las palabras comunes (stopwords) para limpiar los datos
+tokens_filtered_target <- tokens_select(tokens_shootings_target, 
+                                 pattern = stopwords("english"), 
+                                 selection = "remove")
+```
+
+Creación de Matriz Documento-Término:
+
+```{r}
+
+# Creamos una matriz de frecuencia de términos donde cada fila es un documento y cada columna es un término
+dfm_shootings_target <- dfm(tokens_filtered_target)
+```
+
+Conversión a Matriz de Presencia/Ausencia:
+
+```{r}
+
+# Convertimos la matriz de frecuencia en una matriz de presencia/ausencia (1 si el término está presente, 0 si no lo está)
+dfm_shootings_target[dfm_shootings_target >= 1] <- 1
+```
+
+Creación de Matriz de Adyacencia Término-Término:
+
+```{r}
+
+# Generamos una matriz de adyacencia término-término basada en la co-ocurrencia de términos en los documentos
+termMatrix_target <- dfm_shootings_target %*% t(dfm_shootings_target)
+```
+
+Creación del grafo:
+
+```{r}
+
+# Creamos un grafo a partir de la matriz de adyacencia, utilizando un modo no dirigido y asignando pesos a las aristas
+g_target <- graph_from_adjacency_matrix(termMatrix_target, 
+                                        mode = "undirected", 
+                                        weighted = TRUE)
+
+# Simplificamos el grafo eliminando aristas múltiples y loops para clarificar la visualización
+g_target <- simplify(g_target, remove.multiple = TRUE, remove.loops = TRUE)
+```
+
+Configuración del grafo y asignaciones:
+
+```{r}
+
+# Asignamos etiquetas y calculamos el grado de cada vértice en el grafo para análisis posterior
+V(g_target)$label <- V(g_target)$name
+V(g_target)$degree <- degree(g_target)
+
+# Asignamos el título del tiroteo y el target a cada vértice para proporcionar contexto adicional en el análisis del grafo
+V(g_target)$title <- docvars(shootings_target_corpus)$Title
+V(g_target)$target <- docvars(shootings_target_corpus)$Target
+```
+
+Filtrado del grafo:
+
+```{r}
+
+# Filtramos el grafo, eliminando aristas con un peso inferior a un umbral definido para enfocar en conexiones más fuertes
+threshold <- 2
+g_filtered_target <- delete_edges(g_target, E(g_target)[weight < threshold])
+
+# Eliminamos vértices que se quedaron sin conexiones después de la eliminación de aristas
+g_filtered_target <- delete_vertices(g_filtered_target, 
+                            V(g_filtered_target)[degree(g_filtered_target) == 0])
+```
+
+Exportación del grafo:
+
+```{r}
+
+# Exportamos el grafo filtrado a un archivo GraphML para su uso en Gephi
+write_graph(g_filtered_target, "target_network.graphml", format = "graphml")
+```
+
+## Calcular Medidas de Centralidad
+
+Las medidas de centralidad son métricas utilizadas en el análisis de redes para determinar la importancia o el prestigio de los nodos dentro de una red. Estas medidas ayudan a identificar los nodos más influyentes, los puntos críticos de comunicación, o los intermediarios clave en la red.
+
+### Centralidad de Grado (Degree)
+
+Mide cuántas conexiones (aristas) tiene un nodo.
+
+```{r}
+
+# Calculamos la centralidad de grado
+degree_centrality <- degree(g_filtered_target, mode = "all")
+
+# Creamos un dataframe que contenga la información relevante
+tiroteos_df_degree <- data.frame(
+  Title = V(g_filtered_target)$title,
+  Target = V(g_filtered_target)$target,
+  DegreeCentrality = degree_centrality,
+  stringsAsFactors = FALSE
+)
+
+# Ordenamos por centralidad de grado para ver primero los más conectados
+tiroteos_df_degree <- tiroteos_df_degree[order(-tiroteos_df_degree$DegreeCentrality),]
+
+# Imprimimos el dataframe
+print(tiroteos_df_degree)
+```
+
+Los resultados mostrados en la tabla reflejan la centralidad de grado de cada nodo en un grafo de tiroteos, lo que indica el número de conexiones directas que cada evento de tiroteo tiene con otros en la red.
+
+La centralidad de grado alta en tiroteos en escuelas, especialmente aquellos que involucran a "Students+Teachers" como target, sugiere que estos eventos no solo son frecuentes, sino también que tienden a compartir características o estar conectados con muchos otros eventos similares en la red. Esto puede indicar patrones comunes o motivaciones similares en tiroteos escolares.
+
+Por otro lado, los eventos con objetivos como "party guests" o "Ex-Wife & Family" muestran una centralidad menor, lo que sugiere que, aunque estos tiroteos ocurren, tienen menos conexiones directas con otros eventos en la red. Esto podría interpretarse como que estos tiroteos son más aislados o menos frecuentes en términos de patrones similares en comparación con los tiroteos en escuelas.
+
+### Centralidad de tamaño de vecindario (Reach, neighborhood.size)
+
+Medida de la capacidad de un nodo para conectar con otros nodos dentro de un cierto número de pasos.
+
+```{r}
+
+# Calculamos el tamaño del vecindario hasta una distancia de 1, 2 y 3
+neighborhood_size_1 <- neighborhood.size(g_filtered_target, 
+                                         order = 1, mode = "all")
+neighborhood_size_2 <- neighborhood.size(g_filtered_target, 
+                                         order = 2, mode = "all")
+neighborhood_size_3 <- neighborhood.size(g_filtered_target, 
+                                         order = 3, mode = "all")
+
+# Creamos un dataframe para almacenar estos resultados junto con títulos y targets
+neighborhood_data <- data.frame(
+  Title = V(g_filtered_target)$title,
+  Target = V(g_filtered_target)$target,
+  SizeOrder1 = neighborhood_size_1,
+  SizeOrder2 = neighborhood_size_2,
+  SizeOrder3 = neighborhood_size_3,
+  stringsAsFactors = FALSE
+)
+
+# Ordenamos el dataframe por el tamaño del vecindario a la distancia de orden 3
+ordered_data_neighborhood <- 
+  neighborhood_data[order(-neighborhood_data$SizeOrder3),]
+
+# Imprimimos los resultados
+print(ordered_data_neighborhood)
+```
+
+La tabla presenta el tamaño del vecindario para cada tiroteo en tres órdenes de distancia, reflejando cómo el alcance de cada nodo (tiroteo) se expande en la red a medida que se consideran conexiones más distantes.
+
+Los tiroteos relacionados con escuelas, especialmente aquellos con el target "Students+Teachers", muestran un tamaño de vecindario considerablemente más amplio en todas las distancias, alcanzando el máximo en el tercer orden. Esto indica que estos eventos están muy conectados entre sí y con otros eventos, posiblemente debido a patrones o características compartidas que son comunes en tiroteos en entornos educativos.
+
+Por otro lado, eventos con targets más específicos o menos comunes, como "party guests" y "Ex-Wife & Family", tienen tamaños de vecindario más pequeños, indicando que estos tiroteos son más aislados dentro de la red.
+
+Eventos aún más particulares, como aquellos dirigidos a "school girls", presentan los vecindarios más pequeños, lo que sugiere que son incidentes muy específicos con pocas conexiones a otros eventos.
+
+### Centralidad de Cercanía (Closeness)
+
+Mide la cercanía promedio de un nodo a todos los demás nodos en la red.
+
+```{r}
+
+# Calculamos la centralidad de cercanía
+closeness_centrality <- closeness(g_filtered_target, mode = "all")
+
+# Creamos un dataframe que contenga la información relevante
+tiroteos_df_closeness <- data.frame(
+  Title = V(g_filtered_target)$title,
+  Target = V(g_filtered_target)$target,
+  ClosenessCentrality = closeness_centrality,
+  stringsAsFactors = FALSE
+)
+
+# Ordenamos por centralidad de cercania para ver primero los más cercanos
+tiroteos_df_closeness <- 
+  tiroteos_df_closeness[order(-tiroteos_df_closeness$ClosenessCentrality),]
+
+# Imprimimos el dataframe
+print(tiroteos_df_closeness)
+```
+
+La tabla muestra la centralidad de cercanía para tiroteos.
+
+Los tiroteos que involucran a "school girls" y "Ex-Girlfriend & Family" muestran los valores más altos de centralidad de cercanía, indicando que estos eventos están más centrados y tienen caminos más cortos hacia otros eventos en la red. Esto podría sugerir que aunque sean menos comunes, ocupan posiciones estratégicas dentro de la estructura de la red.
+
+Por otro lado, tiroteos en instituciones educativas con objetivos como "Students+Teachers" presentan valores relativamente bajos de centralidad de cercanía, lo que indica que, aunque están densamente conectados entre sí, están situados más periféricamente en términos de la estructura global de la red. Es decir, a pesar de su frecuencia y severidad, estos eventos podrían estar más aislados de otros tipos de tiroteos en la red.
+
+## Detectar Comunidades en el Grafo
+
+Vamos a obtener las comunidades de este grafo que hemos creado:
+
+```{r}
+
+# Detectamos comunidades usando el algoritmo de Louvain
+communities <- cluster_louvain(g_filtered_target)
+
+# Asignamos la comunidad a cada vértice como atributo
+V(g_filtered_target)$community <- membership(communities)
+
+# Asignamos el target como etiqueta de cada vértice para visualización
+V(g_filtered_target)$label <- V(g_filtered_target)$target
+
+# Creamos un dataframe para visualizar los vértices con sus respectivas comunidades
+node_communities <- data.frame(
+  Title = V(g_filtered_target)$title,
+  Target = V(g_filtered_target)$target,
+  Community = V(g_filtered_target)$community,
+  stringsAsFactors = FALSE
+)
+
+# Ordenamos por comunidad para una mejor visualización
+node_communities <- node_communities[order(node_communities$Community),]
+
+# Imprimimos el dataframe
+print(node_communities)
+
+# Mostramos las comunidades en el grafo
+plot(communities, g_filtered_target,
+     vertex.size = 10,
+     vertex.color = V(g_filtered_target)$community,
+     asp = FALSE, # Evitamos que el plot sea distorsionado en proporción
+     main = "Visualización del Grafo con Comunidades")
+```
+
+La visualización del grafo muestra cómo los tiroteos están agrupados en comunidades basadas en la similitud de sus targets.
+
+La comunidad más grande, coloreada en azul, incluye tiroteos en entornos educativos con targets como "Students+Teachers", que indica que los tiroteos en escuelas son frecuentes y están estrechamente interconectados en términos de sus características.
+
+La comunidad naranja agrupa eventos con targets relacionados a "party guests", sugiriendo una conexión entre tiroteos en reuniones sociales. Estos eventos forman un grupo distinto pero menos extenso que el de las escuelas.
+
+La comunidad verde, bastante pequeña en comparación con la azul y la naranja, muestra tiroteos que tienen como target "alguien + random", por lo que podemos ver que se están agrupando por ese componente de random.
+
+La comunidad amarilla, también pequeña, tiene como target a personas de la familia, como "ex-wife", "ex-girlfriend" y directamente "family", por lo que esta es una comunidad más del ámbito doméstico a diferencia de las demás.
+
+Por último, la comunidad más pequeña, que es la rosa, presenta como target a "school girls".
+
+## Analizar la Estructura del Grafo
+
+Calculamos algunas métricas globales del grafo:
+
+```{r}
+
+# Calculamos la densidad de la red
+network_density <- graph.density(g_filtered_target)
+
+# Calculamos el coeficiente de agrupamiento global
+clustering_coefficient <- transitivity(g_filtered_target, type = "global")
+
+# Mostramos las métricas de estructura
+cat("Densidad de la Red:", network_density, "\n")
+cat("Coeficiente de Agrupamiento:", clustering_coefficient, "\n")
+
+```
+
+Estos resultados sugieren que los tiroteos no son eventos aislados sino que tienden a ocurrir en contextos que comparten características, facilitando conexiones y agrupamientos entre ellos.
+
+La densidad podría indicar que algunos tiroteos comparten múltiples características en común, permitiendo numerosas conexiones directas entre ellos.
+
+El alto coeficiente de agrupamiento sugiere que estos tiroteos tienden a agruparse de forma que cada evento está potencialmente relacionado con muchos otros en su grupo, lo que podría reflejar factores comunes como el tipo de objetivo.
+
+# Deep LLMs - Proceso de Extracción y Limpieza de Ubicaciones en Resúmenes de Tiroteos
+
+Al analizar los datos del dataset, me di cuenta de que había tiroteos en los que aparecía vacío el campo de Location, a pesar de mencionarse la ubicación del tiroteo en el campo Summary.
+
+El objetivo principal de este apartado es identificar y extraer automáticamente las ubicaciones mencionadas en los resúmenes de incidentes de tiroteos, y posteriormente limpiar y corregir cualquier anomalía en los datos extraídos.
+
+Una vez obtenidas estas ubicaciones, se añadirán en una nueva columna del dataframe para su uso en posteriores análisis, que servirá tanto para tener la ubicación de aquellos tiroteos con el campo Location vacío, como para tener un detalle más profundo de la ubicación del tiroteo en aquellos que sí tengan relleno el campo Location.
+
+También, podremos comprobar si la ubicación extraída del resumen coincide con la localización de aquellos tiroteos que no tienen el campo Location vacío.
+
+Para llevar a cabo esta tarea, hemos utilizado una combinación de herramientas de procesamiento de lenguaje natural (NLP) y técnicas de manipulación de datos.
+
+A continuación, mencionamos las principales herramientas y métodos utilizados:
+
+1.  **Python y Pandas**:
+
+    -   Utilizamos Python como el lenguaje principal para el procesamiento de datos.
+
+    -   La biblioteca Pandas se empleó para la carga, manipulación y almacenamiento de datos en formato CSV.
+
+2.  **Transformers de Hugging Face**:
+
+    -   Empleamos el modelo `dbmdz/bert-large-cased-finetuned-conll03-english`, un modelo de transformers preentrenado para el reconocimiento de entidades nombradas (NER), capaz de identificar entidades como ubicaciones, nombres de personas y organizaciones en el texto.
+
+    -   La función `pipeline` de Hugging Face se utilizó para crear un pipeline de NER, que facilita la identificación y extracción de ubicaciones.
+
+3.  **Tokenización y Limpieza de Datos**:
+
+    -   Los modelos de transformers a menudo descomponen palabras en subpalabras, marcando las continuaciones con un prefijo `##`. Implementamos una lógica específica para unir estas subpalabras y formar palabras completas.
+
+    -   Creamos una función personalizada para procesar los tokens, eliminando caracteres no deseados y uniendo subpalabras adecuadamente.
+
+4.  **Procesamiento por Lotes**:
+
+    -   Para manejar de manera eficiente el procesamiento de grandes volúmenes de texto, dividimos el dataset en lotes y procesamos cada lote de manera iterativa.
+
+En el archivo `DeepLLMs_ExtractLocations_Transformers_LauraLlorente_ProyectoFinalBAIN.ipynb` adjuntado en la entrega, encontramos el código de las pruebas para obtener los nuevos ficheros CSV con la nueva columna de localización extraída de las ubicaciones mencionadas en los resúmenes de los tiroteos del dataset.
+
+Se han obtenido las localizaciones de aquellos tiroteos que mencionaban la ubicación en el resumen. Si no es mencionada, no se añadirá la localización para ese tiroteo.
+
+## Prueba 1
+
+Hemos hecho un código en Python que realiza un análisis de texto utilizando el modelo de reconocimiento de entidades nombradas (NER) de Hugging Face para extraer ubicaciones de los resúmenes de incidentes de tiroteos. El script carga el dataset, utiliza el modelo de transformers preentrenado para identificar y extraer las ubicaciones mencionadas en los resúmenes, y guarda los resultados en un nuevo archivo CSV.
+
+**Problema:** Durante el proceso de extracción de ubicaciones utilizando modelos de transformers como BERT, es común encontrar caracteres \## delante de algunas palabras. Esto se debe al proceso de tokenización de subpalabras utilizado por estos modelos. Los tokens que comienzan con \## representan subpalabras que se deben unir a la palabra anterior. Por ejemplo, "Mandalay Bay" es tokenizado como "Man ##ada ##lay Bay", por lo que debemos solucionar este problema para poder emplear bien los datos.
+
+```{r}
+
+# Ruta donde tenemos guardado el fichero csv y el nombre del fichero
+ruta_fichero_2 <- "D:/Laura - UTAD/Tercero/Segundo cuatrimestre/Búsqueda y Análisis de la Información/Tareas/Tarea final/"
+
+fichero_2 <- "Extracted_Locations.csv"
+
+# Leemos el archivo CSV 
+  # 'paste0' se usa para construir la ruta completa dell archivo
+  # 'header = TRUE' indica que la primera fila contiene los nombres de las columnas
+  # 'sep = ","' especifica que el separador de campos en el archivo CSV es una coma
+
+datos_2 <- read.csv(file = paste0(ruta_fichero_2, fichero_2), header = TRUE, sep = ",")
+
+# Usamos subset para seleccionar solo las columnas de la localizacion
+selected_data <- subset(datos_2, select = c(Location, Extracted_Location))
+
+# Mostramos las primeras filas
+head(selected_data)
+```
+
+En la comparación de las columnas "Location" y "Extracted_Location" del dataset, se observa que algunas localizaciones se han extraído correctamente mientras que otras presentan errores.
+
+"Texas" y "San Francisco" se ha extraído correctamente del summary porque en Location tenemos "Sutherland Springs, TX" y "San Francisco, CA".
+
+Del tiroteo en "Las Vegas, NV" se ha extraído "Man ##ada ##lay Bay", que es correcto porque Mandalay Bay es un casino de Las Vegas, pero tenemos que limpiar correctamente la localización para quitar los hashtags que hemos comentado antes.
+
+"Edgewood, MD" tiene una combinación de "Baltimore Wilmington Delaware".
+
+```{r}
+
+# Filtramos las filas donde 'Extracted_Location' es 'Baltimore Wilmington Delaware'
+tiroteo_filtrado <- subset(datos_2, 
+                           Extracted_Location == "Baltimore Wilmington Delaware")
+
+# Imprimimos el resultado
+print(tiroteo_filtrado$Summary)
+```
+
+Podemos ver, con el resumen, que se han extraído bien las localizaciones mencionadas en el resumen, donde tuvieron lugar los tiroteos. Baltimore es una ciudad de Maryland, que aparece en Location como MD.
+
+"Thornton, CO" aparece como "Denver". Ambas son ciudades de Colorado (CO). Vamos a analizar cuál se menciona en el resumen del tiroteo:
+
+```{r}
+
+# Filtramos las filas donde 'Extracted_Location' es 'Denver Denver'
+tiroteo_filtrado <- subset(datos_2, 
+                           Extracted_Location == "Denver Denver")
+
+# Imprimimos el resultado
+print(tiroteo_filtrado$Summary)
+```
+
+Podemos ver que la ciudad que se menciona en el resumen es Denver, que está cerca de Thornton, por lo que ha podido haber un error al rellenar ese campo de Location del dataset.
+
+## Prueba 2
+
+Hemos hecho un código en Python que realiza un análisis de texto utilizando el modelo de reconocimiento de entidades nombradas (NER) de Hugging Face para extraer y limpiar ubicaciones de los resúmenes de incidentes de tiroteos. El script carga el dataset, utiliza un modelo de transformers preentrenado para identificar y extraer las ubicaciones mencionadas en los resúmenes, limpia los tokens de subpalabras, y guarda los resultados en un nuevo archivo CSV.
+
+**Problema:** Hemos eliminado los caracteres \## delante de las palabras, pero ahora estas subpalabras no se unen adecuadamente y resultan en palabras separadas por espacios. Por ejemplo, "Man ##ada ##lay Bay" ha pasado a ser "Man ada lay Bay", pero todavía no es "Mandalay Bay", que es lo que buscamos para el correcto análisis en R de las localizaciones.
+
+```{r}
+
+# Ruta donde tenemos guardado el fichero csv y el nombre del fichero
+ruta_fichero_3 <- "D:/Laura - UTAD/Tercero/Segundo cuatrimestre/Búsqueda y Análisis de la Información/Tareas/Tarea final/"
+
+fichero_3 <- "Extracted_Locations_Clean.csv"
+
+# Leemos el archivo CSV 
+  # 'paste0' se usa para construir la ruta completa dell archivo
+  # 'header = TRUE' indica que la primera fila contiene los nombres de las columnas
+  # 'sep = ","' especifica que el separador de campos en el archivo CSV es una coma
+  
+datos_3 <- read.csv(file = paste0(ruta_fichero_3, fichero_3), header = TRUE, sep = ",")
+
+# Usamos subset para seleccionar solo las columnas de la localizacion
+selected_data <- subset(datos_3, select = c(Location, Extracted_Location))
+
+# Mostramos las primeras filas
+head(selected_data)
+```
+
+Del tiroteo en "Las Vegas, NV" se ha extraído ahora "Man ada lay Bay", que es correcto porque Mandalay Bay es un casino de Las Vegas, pero ahora que hemos limpiado los hashtags, se han quedado espacios entre la palabra, que tenemos que eliminar.
+
+## Prueba 3
+
+Hemos hecho un código en Python que utiliza el modelo de reconocimiento de entidades nombradas (NER) de Hugging Face para extraer y limpiar ubicaciones de los resúmenes de incidentes de tiroteos. El script carga el dataset, utiliza un modelo de transformers preentrenado para identificar y extraer las ubicaciones mencionadas en los resúmenes, limpia los tokens de subpalabras, une las palabras correctamente y guarda los resultados en un nuevo archivo CSV.
+
+Ya hemos solucionado todos los problemas surgidos y hemos obtenido, en aquellos tiroteos que mencionan la ubicación en el resumen, el lugar donde ocurrió el incidente.
+
+```{r}
+
+# Ruta donde tenemos guardado el fichero csv y el nombre del fichero
+ruta_fichero_4 <- "D:/Laura - UTAD/Tercero/Segundo cuatrimestre/Búsqueda y Análisis de la Información/Tareas/Tarea final/"
+
+fichero_4 <- "Extracted_Locations_Clean_2.csv"
+
+# Leemos el archivo CSV 
+  # 'paste0' se usa para construir la ruta completa dell archivo
+  # 'header = TRUE' indica que la primera fila contiene los nombres de las columnas
+  # 'sep = ","' especifica que el separador de campos en el archivo CSV es una coma
+  
+datos_4 <- read.csv(file = paste0(ruta_fichero_4, fichero_4), header = TRUE, sep = ",")
+
+# Usamos subset para seleccionar solo las columnas de la localizacion
+selected_data <- subset(datos_4, select = c(Location, Extracted_Location))
+
+# Mostramos las primeras filas
+head(selected_data)
+```
+
+Del tiroteo en "Las Vegas, NV" se ha extraído ahora "Manadalay Bay", que es correcto porque Mandalay Bay es un casino de Las Vegas, y ahora ya lo hemos limpiado y unido correctamente.
+
+Al igual que hemos solucionado este problema de Manadalay Bay, también se han solucionado situaciones similares en otros tiroteos, obteniendo la localización extraída del resumen correctamente.
+
+## Análisis de la nueva columna Extracted_Location
+
+Vamos a comprobar en cuántos tiroteos hemos conseguido obtener la localización a partir del resumen:
+
+```{r}
+
+# Comparamos las columnas según coincidencias
+total <- nrow(datos_4)
+filled_extracted_location <- sum(datos_4$Extracted_Location != "")
+empty_extracted_location <- sum(datos_4$Extracted_Location == "")
+
+# Creamos un data frame para almacenar los resultados
+match_summary <- data.frame(
+  Total = total,
+  Filled_Extracted_Location = filled_extracted_location,
+  Empty_Extracted_Location = empty_extracted_location
+)
+
+# Imprimimos el resumen de coincidencias
+print(match_summary)
+```
+
+Podemos ver que de las 323 filas que tenía el dataset, hemos podido obtener localización a partir del resumen en 205 de ellas, lo cual es una buena cifra, ya que hay que tener en cuenta que hay resúmenes en los que no se menciona ninguna ubicación, y de los que por lo tanto no se habrá podido obtener información para la columna Extracted_Location.
+
+Comparamos la columna Extracted_Location con la columna Location, que ya venía en el dataset:
+
+```{r}
+
+# Convertimos a minúsculas y eliminamos espacios adicionales
+df <- datos_4 %>%
+  mutate(
+    Location = str_trim(tolower(Location)),  
+    Extracted_Location = str_trim(tolower(Extracted_Location))
+  )
+
+# Normalizamos las columnas eliminando comas y otros caracteres no significativos
+df <- df %>%
+  mutate(
+    Normalized_Location = str_replace_all(Location, "[,]", ""),  
+    Normalized_Extracted_Location = str_replace_all(Extracted_Location, "[,]", "")
+  )
+
+# Filtramos las filas donde 'Normalized_Location' y 'Normalized_Extracted_Location' no coinciden y seleccionamos solo las columnas originales 'Location' y 'Extracted_Location'
+no_match <- df %>%
+  filter(!str_detect(Normalized_Location, Normalized_Extracted_Location)) %>%
+  select(Location, Extracted_Location)
+
+# Mostramos las filas que no coinciden
+print(no_match)
+```
+
+Hay que tener en cuenta que, en algunos de estos casos, el campo Location está vacío, por lo que no sale coincidencia con la Extracted_Location, por lo que esos casos no los contamos como no coincidencia.
+
+Además, he observado que muchas de las localizaciones extraídas que han salido como que no coinciden, no están mal, pero suelen ser más detalladas que la ubicación que aparece en Location.
+
+Un ejemplo, es el caso que hemos comentado antes de Las Vegas. Aparece como que no coincide, pero la ubicación está bien extraída. Lo que ocurre es que en la columna Location del dataset aparece una localización más general, que es Las Vegas, y en Extracted_Location aparece una más específica, que es el casino Manadalay Bay, donde tuvo lugar el tiroteo.
+
+Es decir, esta columna Extracted_Location nos sirve para poder buscar información más detallada y específica acerca de la ubicación de los tiroteos.
+
+Mirando los datos de no coincidencias por encima, la única que me ha llamado más la atención es la siguiente, que sí se ha extraído incorrectamente como "the":
+
+```{r}
+
+# Filtramos las filas donde 'Extracted_Location' es 'the'
+tiroteo_filtrado <- subset(no_match, 
+                           Extracted_Location == "the")
+
+# Imprimimos el resultado
+print(tiroteo_filtrado)
+```
+
+# Conclusiones
+
+En el análisis de los tiroteos en Estados Unidos, he empleado diversas técnicas text mining, análisis de redes sociales (SNA) y modelos de lenguaje profundo (LLMs). Estas técnicas me han permitido extraer información valiosa de los datos y ofrecer una comprensión más profunda de los eventos.
+
+### Text Mining
+
+Se utilizaron herramientas como `quanteda` para el análisis cuantitativo de textos, `tidytext` para manipulación y análisis de datos ordenados, y `topicmodels` para la modelización de tópicos, incluyendo el análisis de Latent Dirichlet Allocation (LDA). Además, el uso de `SentimentAnalysis` permitió evaluar los sentimientos y emociones asociados con los textos descriptivos de los incidentes. Estas técnicas ayudaron a identificar patrones recurrentes y características específicas de los tiroteos, como las motivaciones declaradas y los estados mentales de los atacantes.
+
+### Análisis de Redes Sociales (SNA)
+
+El análisis de redes sociales facilitó la visualización de las conexiones entre diferentes incidentes, a través de su relación por el target. También, hemos podido encontrar comunidades de este grafo y ver cuáles eran las más incidentes en la red generada.
+
+### Modelos de Lenguaje Profundo (LLMs)
+
+Se emplearon modelos de lenguaje profundo que permitieron obtener, a partir del resumen del tiroteo, la ubicación de este. Esto, no solo nos permite tener una ubicación para aquellos tiroteos que no tenían relleno el campo de Location, sino que también nos permite tener una información más detallada y específica del lugar de los hechos, que no solo se centra en ciudades o estados, sino que encontramos establecimientos, edificios, etc.
