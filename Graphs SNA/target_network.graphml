@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_degree" for="node" attr.name="degree" attr.type="double"/>
+  <key id="v_title" for="node" attr.name="title" attr.type="string"/>
+  <key id="v_target" for="node" attr.name="target" attr.type="string"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <graph id="G" edgedefault="undirected">
+    <node id="n0">
+      <data key="v_name">text33</data>
+      <data key="v_label">text33</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Plantation, Florida</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">text45</data>
+      <data key="v_label">text45</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Chelsea, MA empty apartment party shooting</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">text76</data>
+      <data key="v_label">text76</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Gloucester County, VA, House Party</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">text82</data>
+      <data key="v_label">text82</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">San Bernardino, California</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">text108</data>
+      <data key="v_label">text108</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Miami Gardens</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">text125</data>
+      <data key="v_label">text125</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Panama City Beach</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">text141</data>
+      <data key="v_label">text141</data>
+      <data key="v_degree">50</data>
+      <data key="v_title">McAvan&apos;s Pub</data>
+      <data key="v_target">Ex-Girlfriend &amp; Family</data>
+    </node>
+    <node id="n7">
+      <data key="v_name">text146</data>
+      <data key="v_label">text146</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Memphis</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n8">
+      <data key="v_name">text147</data>
+      <data key="v_label">text147</data>
+      <data key="v_degree">52</data>
+      <data key="v_title">Pennsburg, Souderton, Lansdale, Harleysville</data>
+      <data key="v_target">Ex-Wife &amp; Family</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">text148</data>
+      <data key="v_label">text148</data>
+      <data key="v_degree">165</data>
+      <data key="v_title">Morgantown</data>
+      <data key="v_target">Ex-Girlfriend+random</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">text160</data>
+      <data key="v_label">text160</data>
+      <data key="v_degree">204</data>
+      <data key="v_title">Cedarville Rancheria Tribe</data>
+      <data key="v_target">Family+random</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">text161</data>
+      <data key="v_label">text161</data>
+      <data key="v_degree">160</data>
+      <data key="v_title">Centennial Hill Bar &amp; Grill</data>
+      <data key="v_target">rapper+random</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">text177</data>
+      <data key="v_label">text177</data>
+      <data key="v_degree">80</data>
+      <data key="v_title">Sandy Hook Elementary School</data>
+      <data key="v_target">Family+students</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">text194</data>
+      <data key="v_label">text194</data>
+      <data key="v_degree">52</data>
+      <data key="v_title">Residences in Grand Rapids</data>
+      <data key="v_target">Ex-Wife &amp; Family</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">text195</data>
+      <data key="v_label">text195</data>
+      <data key="v_degree">52</data>
+      <data key="v_title">Southern Union State Community College</data>
+      <data key="v_target">Ex-Wife &amp; Family</data>
+    </node>
+    <node id="n15">
+      <data key="v_name">text219</data>
+      <data key="v_label">text219</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">SuccessTech Academy</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n16">
+      <data key="v_name">text220</data>
+      <data key="v_label">text220</data>
+      <data key="v_degree">9</data>
+      <data key="v_title">Crandon shooting</data>
+      <data key="v_target">party guests</data>
+    </node>
+    <node id="n17">
+      <data key="v_name">text224</data>
+      <data key="v_label">text224</data>
+      <data key="v_degree">1</data>
+      <data key="v_title">Amish school shooting</data>
+      <data key="v_target">school girls</data>
+    </node>
+    <node id="n18">
+      <data key="v_name">text225</data>
+      <data key="v_label">text225</data>
+      <data key="v_degree">1</data>
+      <data key="v_title">West Nickel Mines Amish School</data>
+      <data key="v_target">school girls</data>
+    </node>
+    <node id="n19">
+      <data key="v_name">text238</data>
+      <data key="v_label">text238</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Case Western Reserve University</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n20">
+      <data key="v_name">text240</data>
+      <data key="v_label">text240</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Appalachian School of Law</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n21">
+      <data key="v_name">text250</data>
+      <data key="v_label">text250</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Columbine High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n22">
+      <data key="v_name">text252</data>
+      <data key="v_label">text252</data>
+      <data key="v_degree">36</data>
+      <data key="v_title">Thurston High School</data>
+      <data key="v_target">Students+Parents</data>
+    </node>
+    <node id="n23">
+      <data key="v_name">text254</data>
+      <data key="v_label">text254</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Westside Middle School killings</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n24">
+      <data key="v_name">text261</data>
+      <data key="v_label">text261</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Bethel Regional High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n25">
+      <data key="v_name">text264</data>
+      <data key="v_label">text264</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Frontier Junior High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n26">
+      <data key="v_name">text265</data>
+      <data key="v_label">text265</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Richland High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n27">
+      <data key="v_name">text282</data>
+      <data key="v_label">text282</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Simon&apos;s Rock College of Bard</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n28">
+      <data key="v_name">text285</data>
+      <data key="v_label">text285</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Lindhurst High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n29">
+      <data key="v_name">text294</data>
+      <data key="v_label">text294</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Cleveland Elementary School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n30">
+      <data key="v_name">text296</data>
+      <data key="v_label">text296</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Oakland Elementary School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n31">
+      <data key="v_name">text306</data>
+      <data key="v_label">text306</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Goddard Junior High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <node id="n32">
+      <data key="v_name">text313</data>
+      <data key="v_label">text313</data>
+      <data key="v_degree">41</data>
+      <data key="v_title">Valley High School</data>
+      <data key="v_target">Students+Teachers</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n2">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n3">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n4">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n0" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n5">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n1" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n2" target="n4">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n2" target="n5">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n2" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n2" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n3" target="n5">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n3" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n3" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n4" target="n5">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n4" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n4" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n5" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n6" target="n8">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n6" target="n13">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n6" target="n14">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n7" target="n16">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n8" target="n13">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n8" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n9" target="n10">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n9" target="n11">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n10" target="n11">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n15">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n19">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n20">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n21">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n22">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n23">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n24">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n25">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n26">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n27">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n28">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n29">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n30">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n31">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n12" target="n32">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n13" target="n14">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n19">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n20">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n21">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n22">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n15" target="n23">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n24">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n15" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n17" target="n18">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n19" target="n20">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n21">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n22">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n19" target="n23">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n24">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n19" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n21">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n22">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n20" target="n23">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n24">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n20" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n22">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n21" target="n23">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n24">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n21" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n22" target="n23">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n24">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n25">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n26">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n27">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n28">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n29">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n30">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n31">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n22" target="n32">
+      <data key="e_weight">2</data>
+    </edge>
+    <edge source="n23" target="n24">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n23" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n25">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n24" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n26">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n25" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n27">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n26" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n27" target="n28">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n27" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n27" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n27" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n27" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n28" target="n29">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n28" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n28" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n28" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n29" target="n30">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n29" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n29" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n30" target="n31">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n30" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+    <edge source="n31" target="n32">
+      <data key="e_weight">3</data>
+    </edge>
+  </graph>
+</graphml>
